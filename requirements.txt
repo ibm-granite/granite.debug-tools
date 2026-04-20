@@ -1,0 +1,35 @@
+# Core dependencies for STaD (Scaffolded Task Decomposition)
+# Install with: pip install -r requirements.txt
+
+# =============================================================================
+# REQUIRED DEPENDENCIES
+# =============================================================================
+
+# OpenAI API client (required for OpenAI models)
+openai>=1.0.0
+
+# Google Generative AI (required for Gemini models)
+google-generativeai>=0.3.0
+
+# Environment variable management (required by generate_variations.py and test_variations.py)
+python-dotenv>=1.0.0
+
+# Regular expression library with advanced features (required by helpers.py)
+regex>=2023.0.0
+
+# HTTP requests library (imported by model_client.py)
+requests>=2.31.0
+
+# =============================================================================
+# OPTIONAL DEPENDENCIES
+# =============================================================================
+
+# VLLM for local model inference (optional - only needed if using VLLM backend)
+# Uncomment the following lines if you need local model support:
+vllm>=0.3.0
+transformers>=4.30.0  # Required by VLLM for AutoTokenizer
+
+# Math verification library (optional - only needed if Math-Verify: true in config)
+# Note: If math_verify is a custom local module, no installation needed
+# Otherwise, uncomment if available as a package:
+math-verify>=0.9.0

@@ -1,0 +1,7 @@
+{
+  "input_file": "data/sample_data.jsonl",
+  "model_name": "gpt-4o-mini",
+  "judge_model_name": "gpt-3.5-turbo",
+  "client_type": "openai",
+  "Math-Verify": false
+}
