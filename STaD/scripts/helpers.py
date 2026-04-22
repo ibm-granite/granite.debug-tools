@@ -18,7 +18,11 @@ from prompts import (
     prompt_sequential_segments_answers_reasoning,
     prompt_segment
 )
-from math_verify import parse, verify
+try:
+    from math_verify import parse, verify
+except ImportError:
+    def parse(x): raise NotImplementedError("math_verify not installed")
+    def verify(a, b): raise NotImplementedError("math_verify not installed")
 
 
 @dataclass
