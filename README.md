@@ -26,6 +26,9 @@ Additional debugging tools are being prepared for open-source release. Stay tune
 
 We welcome contributions! If you'd like to contribute to any of the tools in this repository, please open an issue or submit a pull request.
 
+## 🚧 Work in Progress
+This repository is actively evolving. We are continuously adding new debugging tools, expanding coverage, and refining existing functionality based on community feedback and ongoing research. Check back regularly for updates, and feel free to open an issue or discussion if you have suggestions or requests.
+
 # Notice
 
 IBM Public Repository Disclosure: All content in this repository including code has been provided by IBM under the associated open source software license and IBM is under no obligation to provide enhancements, updates, or support. IBM developers produced this code as an open source project (not as an IBM product), and IBM makes no assertions as to the level of quality nor security, and will not be maintaining this code going forward.
