@@ -1,4 +1,4 @@
-"""LangChain MCP client for the AI Benchmarking server.
+"""LangChain MCP client for the granite.debug.perfbench server.
 
 Connects to the MCP server via stdio and exposes its tools to a LangGraph
 agent powered by IBM Granite 4.
@@ -52,7 +52,7 @@ async def interactive_loop() -> None:
     llm, model_name = _build_llm()
     provider = os.getenv("LLM_PROVIDER", "ollama").lower()
 
-    print("AI Benchmarking MCP Client")
+    print("granite.debug.perfbench MCP Client")
     print(f"Provider: {provider}  |  Model: {model_name}")
     print("Type 'quit' or 'exit' to stop.\n")
 

@@ -1,4 +1,4 @@
-"""MCP tools for the AI Benchmarking server.
+"""MCP tools for the granite.debug.perfbench server.
 
 Register tools using the ``@mcp.tool()`` decorator. Tools let LLMs take
 actions through the server — they are expected to perform computation and

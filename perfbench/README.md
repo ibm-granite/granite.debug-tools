@@ -88,7 +88,7 @@ vllm bench serve --model ibm-granite/granite-4.0-micro --base-url http://localho
 Example of agent prompt:
 
 ```
-Run vllm benchmarks for model ibm-granite/granite-4.0-micro and served model name granite-4.0-micro with base url https://vllm.instace.com and api token <secret>
+Run vllm benchmarks for model ibm-granite/granite-4.0-micro and served model name granite-4.0-micro with base url https://your-vllm-endpoint.example.com and api token <secret>
 ```
 
 
@@ -118,7 +118,7 @@ aiperf profile --model ibm-granite/granite-4.0-micro --url http://localhost:8000
 Example of agent prompt:
 
 ```
-Run aiperf benchmarks for model granite-4.0-micro and tokenizer ibm-granite/granite-4.0-micro with base url https://vllm.instance.com and api token <secret>
+Run aiperf benchmarks for model granite-4.0-micro and tokenizer ibm-granite/granite-4.0-micro with base url https://your-vllm-endpoint.example.com and api token <secret>
 ```
 
 ---
@@ -147,7 +147,7 @@ guidellm benchmark --target http://localhost:8000 \
 Example of agent prompt:
 
 ```
-Run guidellm benchmarks with target url https://vllm.instance.com using sweep profile, model granite-4.0-micro, processor ibm-granite/granite-4.0-micro, api key <secret>, and synthetic data prompt_tokens=256,output_tokens=128
+Run guidellm benchmarks with target url https://your-vllm-endpoint.example.com using sweep profile, model granite-4.0-micro, processor ibm-granite/granite-4.0-micro, api key <secret>, and synthetic data prompt_tokens=256,output_tokens=128
 ```
 
 

@@ -1,6 +1,6 @@
 # Available Tools
 
-This document lists all MCP tools, resources, and prompts exposed by the AI Benchmarking server with their parameters and natural-language usage examples.
+This document lists all MCP tools, resources, and prompts exposed by the granite.debug.perfbench server with their parameters and natural-language usage examples.
 
 ---
 
@@ -362,7 +362,7 @@ Available presets: `quick` (vLLM smoke test), `throughput` (vLLM max throughput)
 | `ollama_url` | `str` | No | `"http://localhost:11434"` | Ollama server URL. |
 
 **Example prompt:**
-> Run the quick preset for `ibm-granite/granite-4.0-micro` against `http://localhost:8000` with API token `my-secret` using custom auth header `CUSTOM_API_KEY_NAME`.
+> Run the quick preset for `ibm-granite/granite-4.0-micro` against `http://localhost:8000` with API token `<secret>` using custom auth header `CUSTOM_API_KEY_NAME`.
 
 > Run the inference preset for the model at `/models/granite-4.0-micro.Q4_K_M.gguf`.
 

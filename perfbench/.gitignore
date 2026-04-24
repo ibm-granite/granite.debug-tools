@@ -4,3 +4,5 @@ crash.log
 __pycache__/
 *.egg-info/
 .venv/
+.env
+.env.*
