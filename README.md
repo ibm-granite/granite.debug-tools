@@ -11,12 +11,19 @@ These tools help identify, evaluate, and resolve issues across fine-tuning workf
 | If I need to... | Then I should use... |
 | ---------------- | -------------------- |
 | Design scaffolded tasks to diagnose which skill-level capability is missing | [**STaD**](./STaD/) |
+| Validate model behavior across inference engines (vLLM, llama.cpp, Ollama) | [**validation-framework**](./validation-framework/) |
 
 ### STaD - Scaffolded Task Design
 
 [STaD](./STaD/) is a framework for generating scaffolded variations of multi-step reasoning tasks to enable systematic LLM debugging, evaluation, and training.
 
 Use STaD when you need to design scaffolded tasks to diagnose which skill-level capability is missing in your model.
+
+### validation-framework - Granite Validation Framework
+
+[validation-framework](./validation-framework/) is a unified validation framework for running model checks across inference engines (vLLM, llama.cpp, Ollama). It provides a CLI (`granite-validate`) to run automated validation tests against Granite models deployed on different backends, supporting both managed (framework starts/stops the engine) and external (connect to a running engine) execution modes.
+
+Use validation-framework when you need to validate that a Granite model behaves correctly across different inference engines.
 
 ## Coming Soon
 
