@@ -1,4 +1,4 @@
-# Granite Validation Framework
+# granite.debug.validation-framework
 
 Unified validation framework for running model checks across inference engines
 (vLLM, llama.cpp, Ollama).
