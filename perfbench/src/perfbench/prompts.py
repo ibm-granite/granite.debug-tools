@@ -1,4 +1,4 @@
-"""MCP prompts for the granite.debug.perfbench server.
+"""MCP prompts for the perfbench server.
 
 Register prompts using the `@mcp.prompt()` decorator. Prompts define reusable
 interaction patterns — templates that guide how LLMs should approach specific tasks.

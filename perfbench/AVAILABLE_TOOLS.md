@@ -1,6 +1,6 @@
 # Available Tools
 
-This document lists all MCP tools, resources, and prompts exposed by the granite.debug.perfbench server with their parameters and natural-language usage examples.
+This document lists all MCP tools, resources, and prompts exposed by the perfbench server with their parameters and natural-language usage examples.
 
 ---
 

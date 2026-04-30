@@ -15,7 +15,7 @@ logging.basicConfig(
     force=True,
 )
 
-mcp = FastMCP("granite.debug.perfbench")
+mcp = FastMCP("perfbench")
 
 # Import modules to register their tools, resources, and prompts with the server.
 # Each module uses the shared `mcp` instance to register its handlers.

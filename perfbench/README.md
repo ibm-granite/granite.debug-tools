@@ -1,4 +1,4 @@
-# granite.debug.perfbench - MCP server for Granite benchmarking
+# perfbench - MCP server for Granite benchmarking
 
 MCP server that manages LLM benchmark runs as asynchronous subprocesses, wrapping five benchmark runners behind a unified [Model Context Protocol](https://modelcontextprotocol.io) tool interface.
 
@@ -37,7 +37,7 @@ uv run perfbench
 ### With Claude Desktop
 
 ```bash
-uv run mcp install src/perfbench/server.py --name "granite.debug.perfbench"
+uv run mcp install src/perfbench/server.py --name "perfbench"
 ```
 
 ### Using the LangChain Client
