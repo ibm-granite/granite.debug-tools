@@ -16,7 +16,7 @@ dev = [
 ]
 
 [project.scripts]
-granite-validate = "granite_validation.cli:main"
+runtimes-validator = "granite_validation.cli:main"
 
 [build-system]
 requires = ["hatchling"]

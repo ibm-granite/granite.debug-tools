@@ -25,7 +25,7 @@ from granite_validation.tests.registry import (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="granite-validate",
+        prog="runtimes-validator",
         description="Unified validation framework for Granite models across inference engines",
     )
     parser.add_argument(

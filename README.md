@@ -28,7 +28,7 @@ Use perfbench when you need to benchmark LLM serving endpoints or local inferenc
 
 ### runtimes-validator
 
-[runtimes-validator](./runtimes-validator/) is a unified validation framework for running model checks across inference engines (vLLM, llama.cpp, Ollama). It provides a CLI (`granite-validate`) to run automated validation tests against Granite models deployed on different backends, supporting both managed (framework starts/stops the engine) and external (connect to a running engine) execution modes.
+[runtimes-validator](./runtimes-validator/) is a unified validation framework for running model checks across inference engines (vLLM, llama.cpp, Ollama). It provides a CLI (`runtimes-validator`) to run automated validation tests against Granite models deployed on different backends, supporting both managed (framework starts/stops the engine) and external (connect to a running engine) execution modes.
 
 Use runtimes-validator when you need to validate that a Granite model behaves correctly across different inference engines.
 

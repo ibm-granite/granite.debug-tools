@@ -29,10 +29,10 @@ uv sync --extra dev
 uv sync --extra dev
 
 # Run validation against an external Ollama instance
-uv run granite-validate --engine ollama --model granite3.3:8b --mode external
+uv run runtimes-validator --engine ollama --model granite3.3:8b --mode external
 
 # Run specific tests
-uv run granite-validate --engine vllm --model ibm-granite/granite-3.3-8b-instruct --tests basic_generation
+uv run runtimes-validator --engine vllm --model ibm-granite/granite-3.3-8b-instruct --tests basic_generation
 
 # Run framework unit tests
 uv run pytest
@@ -69,19 +69,19 @@ Managed mode requires the engine binary to be installed locally, or provided via
 
 ```bash
 # Start and stop an Ollama server for this validation run
-uv run granite-validate \
+uv run runtimes-validator \
   --engine ollama \
   --model granite3.3:8b \
   --mode managed
 
 # Start and stop vLLM on the default port
-uv run granite-validate \
+uv run runtimes-validator \
   --engine vllm \
   --model ibm-granite/granite-3.3-8b-instruct \
   --mode managed
 
 # Start and stop llama.cpp with a local GGUF model
-uv run granite-validate \
+uv run runtimes-validator \
   --engine llamacpp \
   --model /path/to/model.gguf \
   --mode managed
@@ -91,7 +91,7 @@ If the default port is already in use, set `--base-url` to the port the managed
 process should serve on:
 
 ```bash
-uv run granite-validate \
+uv run runtimes-validator \
   --engine vllm \
   --model ibm-granite/granite-3.3-8b-instruct \
   --mode managed \
@@ -102,21 +102,21 @@ Engine-specific managed options can be passed as JSON through `--extra`:
 
 ```bash
 # vLLM: custom binary, memory/model settings, and raw server flags
-uv run granite-validate \
+uv run runtimes-validator \
   --engine vllm \
   --model ibm-granite/granite-3.3-8b-instruct \
   --mode managed \
   --extra '{"vllm_bin": "/usr/local/bin/vllm", "max_model_len": 4096, "gpu_memory_utilization": 0.9, "server_args": ["--trust-remote-code"]}'
 
 # llama.cpp: custom binary and server settings
-uv run granite-validate \
+uv run runtimes-validator \
   --engine llamacpp \
   --model /path/to/model.gguf \
   --mode managed \
   --extra '{"llamacpp_bin": "/usr/local/bin/llama-server", "ctx_size": 8192, "n_gpu_layers": 99, "jinja": true}'
 
 # Ollama: custom binary and pull/startup timeouts
-uv run granite-validate \
+uv run runtimes-validator \
   --engine ollama \
   --model granite3.3:8b \
   --mode managed \
@@ -136,7 +136,7 @@ External mode is useful when the engine is already running, is remote, or has
 custom launch settings managed outside the framework:
 
 ```bash
-uv run granite-validate \
+uv run runtimes-validator \
   --engine vllm \
   --model ibm-granite/granite-3.3-8b-instruct \
   --mode external \
