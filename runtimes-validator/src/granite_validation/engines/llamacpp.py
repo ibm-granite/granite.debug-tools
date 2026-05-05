@@ -79,7 +79,6 @@ class LlamaCppEngine(OpenAICompatibleEngine):
 
         try:
             self._wait_until_ready()
-            self._fetch_version()
         except Exception:
             self.stop()
             raise
@@ -105,6 +104,12 @@ class LlamaCppEngine(OpenAICompatibleEngine):
                 self._stderr_file = None
 
     # -- Info -------------------------------------------------------------
+
+    def health_check(self) -> bool:
+        healthy = super().health_check()
+        if healthy and self._server_version is None:
+            self._fetch_version()
+        return healthy
 
     def get_info(self) -> EngineInfo:
         return EngineInfo(
@@ -218,8 +223,13 @@ class LlamaCppEngine(OpenAICompatibleEngine):
     def _fetch_version(self) -> None:
         try:
             data = self.props()
-            build = data.get("build_info", {})
-            self._server_version = build.get("version", "unknown")
+            build = data.get("build_info")
+            if isinstance(build, str):
+                self._server_version = build.split("-")[0] if build else "unknown"
+            elif isinstance(build, dict):
+                self._server_version = build.get("version", "unknown")
+            else:
+                self._server_version = "unknown"
             logger.info("llama-server version: %s", self._server_version)
         except Exception:
             logger.warning("Failed to fetch llama-server version", exc_info=True)

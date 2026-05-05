@@ -146,7 +146,7 @@ def test_vllm_health_check_hits_health_endpoint(mock_get: MagicMock):
 
     engine.health_check()
 
-    url = mock_get.call_args.args[0]
+    url = mock_get.call_args_list[0].args[0]
     assert url == "http://myhost:8000/health"
 
 

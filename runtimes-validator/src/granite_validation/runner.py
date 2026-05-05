@@ -176,6 +176,7 @@ class ValidationRunner:
                 info,
                 lifecycle_error=f"Engine '{self._engine.engine_id()}' is not reachable",
             )
+        info = self._refresh_engine_info(info)
         return self._execute_tests(info)
 
     def _build_report(

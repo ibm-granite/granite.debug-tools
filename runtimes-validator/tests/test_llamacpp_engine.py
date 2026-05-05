@@ -150,7 +150,7 @@ def test_llamacpp_health_check_hits_health_endpoint(mock_get: MagicMock):
 
     engine.health_check()
 
-    url = mock_get.call_args.args[0]
+    url = mock_get.call_args_list[0].args[0]
     assert url == "http://myhost:8080/health"
 
 
@@ -425,7 +425,23 @@ def test_get_info_returns_version_after_start():
     assert info.mode == "managed"
 
 
-# --- _fetch_version failure ---
+# --- _fetch_version ---
+
+
+@patch("granite_validation.engines.openai_compat.requests.get")
+def test_fetch_version_string_build_info(mock_get: MagicMock):
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "build_info": "b8680-abc123def",
+        "default_generation_settings": {},
+    }
+    mock_get.return_value = resp
+    engine = LlamaCppEngine(EngineConfig())
+
+    engine._fetch_version()
+
+    assert engine._server_version == "b8680"
 
 
 @patch("granite_validation.engines.llamacpp.requests.get")

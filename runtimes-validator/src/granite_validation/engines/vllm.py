@@ -133,6 +133,12 @@ class VllmEngine(OpenAICompatibleEngine):
 
     # -- Info -------------------------------------------------------------
 
+    def health_check(self) -> bool:
+        healthy = super().health_check()
+        if healthy and self._vllm_version is None:
+            self._fetch_version()
+        return healthy
+
     def get_info(self) -> EngineInfo:
         return EngineInfo(
             engine_id=self.engine_id(),
@@ -233,7 +239,11 @@ class VllmEngine(OpenAICompatibleEngine):
 
     def _fetch_version(self) -> None:
         try:
-            resp = requests.get(f"{self._base_url}/version", timeout=5)
+            resp = requests.get(
+                f"{self._base_url}/version",
+                headers=self._headers or None,
+                timeout=5,
+            )
             if resp.status_code == 200:
                 self._vllm_version = resp.json().get("version", "unknown")
                 logger.info("vLLM version: %s", self._vllm_version)

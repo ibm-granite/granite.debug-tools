@@ -82,7 +82,6 @@ class OllamaEngine(OpenAICompatibleEngine):
 
         try:
             self._wait_until_ready()
-            self._fetch_version()
             self._ensure_model(model)
         except Exception:
             self.stop()
@@ -109,6 +108,12 @@ class OllamaEngine(OpenAICompatibleEngine):
                 self._stderr_file = None
 
     # -- Info -------------------------------------------------------------
+
+    def health_check(self) -> bool:
+        healthy = super().health_check()
+        if healthy and self._ollama_version is None:
+            self._fetch_version()
+        return healthy
 
     def get_info(self) -> EngineInfo:
         return EngineInfo(
@@ -311,7 +316,11 @@ class OllamaEngine(OpenAICompatibleEngine):
 
     def _fetch_version(self) -> None:
         try:
-            resp = requests.get(f"{self._base_url}{self._HEALTH_ENDPOINT}", timeout=5)
+            resp = requests.get(
+                f"{self._base_url}{self._HEALTH_ENDPOINT}",
+                headers=self._headers or None,
+                timeout=5,
+            )
             if resp.status_code == 200:
                 self._ollama_version = resp.json().get("version", "unknown")
                 logger.info("Ollama version: %s", self._ollama_version)
@@ -319,6 +328,10 @@ class OllamaEngine(OpenAICompatibleEngine):
             logger.warning("Failed to fetch ollama version", exc_info=True)
 
     def _ensure_model(self, model: str) -> None:
+        if self._config.extra.get("skip_pull", False):
+            logger.info("Skipping model pull (skip_pull=true)")
+            return
+        
         pull_timeout = self._config.extra.get("pull_timeout", _DEFAULT_PULL_TIMEOUT)
         logger.info("Ensuring model '%s' is available (pull timeout: %ds)", model, pull_timeout)
 
