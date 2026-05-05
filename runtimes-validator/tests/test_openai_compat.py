@@ -5,10 +5,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from granite_validation.domain.models import EngineTimeoutError
-from granite_validation.engines.base import EngineConfig
-from granite_validation.engines.llamacpp import LlamaCppEngine
-from granite_validation.engines.vllm import VllmEngine
+from runtimes_validator.domain.models import EngineTimeoutError
+from runtimes_validator.engines.base import EngineConfig
+from runtimes_validator.engines.llamacpp import LlamaCppEngine
+from runtimes_validator.engines.vllm import VllmEngine
 
 
 # --- Helpers ---
@@ -90,7 +90,7 @@ def test_get_info():
 # --- chat() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_basic(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = VllmEngine(EngineConfig(model_id="granite-3.3-8b"))
@@ -113,7 +113,7 @@ def test_chat_basic(mock_post: MagicMock):
     assert payload["max_tokens"] == 512
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_includes_tools_when_provided(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = LlamaCppEngine(EngineConfig(model_id="my-model"))
@@ -126,7 +126,7 @@ def test_chat_includes_tools_when_provided(mock_post: MagicMock):
     assert payload["tool_choice"] == "auto"
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_omits_tools_when_none(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = VllmEngine(EngineConfig(model_id="m"))
@@ -138,7 +138,7 @@ def test_chat_omits_tools_when_none(mock_post: MagicMock):
     assert "tool_choice" not in payload
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_omits_model_when_model_id_is_none(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = LlamaCppEngine(EngineConfig())  # no model_id
@@ -149,7 +149,7 @@ def test_chat_omits_model_when_model_id_is_none(mock_post: MagicMock):
     assert "model" not in payload
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_posts_to_correct_url(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = VllmEngine(EngineConfig(base_url="http://gpu:8000", model_id="m"))
@@ -163,35 +163,35 @@ def test_chat_posts_to_correct_url(mock_post: MagicMock):
 # --- health_check() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_health_check_returns_true_on_200(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = VllmEngine(EngineConfig())
     assert engine.health_check() is True
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_health_check_returns_false_on_non_200(mock_get: MagicMock):
     mock_get.return_value = _fake_health_down()
     engine = LlamaCppEngine(EngineConfig())
     assert engine.health_check() is False
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_health_check_returns_false_on_connection_error(mock_get: MagicMock):
     mock_get.side_effect = requests.ConnectionError("refused")
     engine = VllmEngine(EngineConfig())
     assert engine.health_check() is False
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_health_check_returns_false_on_timeout(mock_get: MagicMock):
     mock_get.side_effect = requests.Timeout("timed out")
     engine = VllmEngine(EngineConfig())
     assert engine.health_check() is False
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_health_check_hits_correct_url(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = LlamaCppEngine(EngineConfig(base_url="http://myhost:8080"))
@@ -219,7 +219,7 @@ def test_vllm_stop_noop_when_no_process():
 # --- chat_stream() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_stream_yields_parsed_chunks(mock_post: MagicMock):
     sse_lines = [
         'data: {"choices":[{"delta":{"content":"Hi"}}]}',
@@ -236,7 +236,7 @@ def test_chat_stream_yields_parsed_chunks(mock_post: MagicMock):
     assert chunks[1]["choices"][0]["finish_reason"] == "stop"
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_stream_sends_correct_payload(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response(["data: [DONE]"])
     engine = VllmEngine(EngineConfig(model_id="granite-3.3-8b"))
@@ -259,7 +259,7 @@ def test_chat_stream_sends_correct_payload(mock_post: MagicMock):
     assert payload["max_tokens"] == 128
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_stream_posts_to_correct_url(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response(["data: [DONE]"])
     engine = LlamaCppEngine(EngineConfig(base_url="http://gpu:8080", model_id="m"))
@@ -271,7 +271,7 @@ def test_chat_stream_posts_to_correct_url(mock_post: MagicMock):
     assert mock_post.call_args.kwargs["stream"] is True
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_stream_skips_empty_lines(mock_post: MagicMock):
     sse_lines = [
         "",
@@ -291,7 +291,7 @@ def test_chat_stream_skips_empty_lines(mock_post: MagicMock):
 # --- LlamaCppEngine.tokenize() ---
 
 
-@patch("granite_validation.engines.llamacpp.requests.post")
+@patch("runtimes_validator.engines.llamacpp.requests.post")
 def test_tokenize_basic(mock_post: MagicMock):
     resp = MagicMock()
     resp.json.return_value = {"tokens": [1, 2, 3, 4]}
@@ -309,7 +309,7 @@ def test_tokenize_basic(mock_post: MagicMock):
     assert "parse_special" not in payload
 
 
-@patch("granite_validation.engines.llamacpp.requests.post")
+@patch("runtimes_validator.engines.llamacpp.requests.post")
 def test_tokenize_with_special_flags(mock_post: MagicMock):
     resp = MagicMock()
     resp.json.return_value = {"tokens": [99]}
@@ -324,7 +324,7 @@ def test_tokenize_with_special_flags(mock_post: MagicMock):
     assert payload["parse_special"] is True
 
 
-@patch("granite_validation.engines.llamacpp.requests.post")
+@patch("runtimes_validator.engines.llamacpp.requests.post")
 def test_tokenize_sends_headers(mock_post: MagicMock):
     resp = MagicMock()
     resp.json.return_value = {"tokens": [1]}
@@ -340,7 +340,7 @@ def test_tokenize_sends_headers(mock_post: MagicMock):
 # --- LlamaCppEngine.detokenize() ---
 
 
-@patch("granite_validation.engines.llamacpp.requests.post")
+@patch("runtimes_validator.engines.llamacpp.requests.post")
 def test_detokenize_basic(mock_post: MagicMock):
     resp = MagicMock()
     resp.json.return_value = {"content": "Hello world"}
@@ -359,7 +359,7 @@ def test_detokenize_basic(mock_post: MagicMock):
 # --- LlamaCppEngine.props() ---
 
 
-@patch("granite_validation.engines.llamacpp.requests.get")
+@patch("runtimes_validator.engines.llamacpp.requests.get")
 def test_props_basic(mock_get: MagicMock):
     resp = MagicMock()
     resp.json.return_value = {
@@ -377,7 +377,7 @@ def test_props_basic(mock_get: MagicMock):
     assert url == "http://myhost:8080/props"
 
 
-@patch("granite_validation.engines.llamacpp.requests.get")
+@patch("runtimes_validator.engines.llamacpp.requests.get")
 def test_props_sends_headers(mock_get: MagicMock):
     resp = MagicMock()
     resp.json.return_value = {}
@@ -393,7 +393,7 @@ def test_props_sends_headers(mock_get: MagicMock):
 # --- Timeout handling ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_raises_engine_timeout_error_on_timeout(mock_post: MagicMock):
     mock_post.side_effect = requests.Timeout("Read timed out")
     engine = VllmEngine(EngineConfig(model_id="m"))
@@ -402,7 +402,7 @@ def test_chat_raises_engine_timeout_error_on_timeout(mock_post: MagicMock):
         engine.chat([{"role": "user", "content": "hi"}])
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_sets_last_timeout_flag_on_timeout(mock_post: MagicMock):
     mock_post.side_effect = requests.Timeout("Read timed out")
     engine = VllmEngine(EngineConfig(model_id="m"))
@@ -414,7 +414,7 @@ def test_chat_sets_last_timeout_flag_on_timeout(mock_post: MagicMock):
     assert engine._last_timeout is True
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_resets_last_timeout_on_success(mock_post: MagicMock):
     engine = VllmEngine(EngineConfig(model_id="m"))
     engine._last_timeout = True
@@ -425,7 +425,7 @@ def test_chat_resets_last_timeout_on_success(mock_post: MagicMock):
     assert engine._last_timeout is False
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_timeout_observation_is_sticky_until_reset(mock_post: MagicMock):
     engine = VllmEngine(EngineConfig(model_id="m"))
     mock_post.side_effect = [
@@ -444,7 +444,7 @@ def test_chat_timeout_observation_is_sticky_until_reset(mock_post: MagicMock):
     assert engine.timed_out_since_last_check() is False
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_stream_raises_engine_timeout_error_on_request_timeout(mock_post: MagicMock):
     mock_post.side_effect = requests.Timeout("Read timed out")
     engine = VllmEngine(EngineConfig(model_id="m"))
@@ -455,7 +455,7 @@ def test_chat_stream_raises_engine_timeout_error_on_request_timeout(mock_post: M
     assert engine.timed_out_since_last_check() is True
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_stream_raises_engine_timeout_error_on_iteration_timeout(mock_post: MagicMock):
     resp = MagicMock()
     resp.iter_lines.side_effect = requests.Timeout("Read timed out")

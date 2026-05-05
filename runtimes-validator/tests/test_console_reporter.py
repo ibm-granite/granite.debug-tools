@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from granite_validation.domain.models import (
+from runtimes_validator.domain.models import (
     CheckResult,
     EngineInfo,
     Report,
     TestResult,
 )
-from granite_validation.reporting.console import ConsoleReporter
+from runtimes_validator.reporting.console import ConsoleReporter
 
 
 def _make_engine_info() -> EngineInfo:

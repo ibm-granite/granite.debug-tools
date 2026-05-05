@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from granite_validation.domain.models import CheckResult, EngineInfo, Report, TestResult
-from granite_validation.engines.base import AbstractEngine, EngineConfig
-from granite_validation.reporting.base import AbstractReporter
-from granite_validation.runner import ValidationRunner
-from granite_validation.tests.base import AbstractValidationTest
+from runtimes_validator.domain.models import CheckResult, EngineInfo, Report, TestResult
+from runtimes_validator.engines.base import AbstractEngine, EngineConfig
+from runtimes_validator.reporting.base import AbstractReporter
+from runtimes_validator.runner import ValidationRunner
+from runtimes_validator.tests.base import AbstractValidationTest
 
 
 class MockEngine(AbstractEngine):

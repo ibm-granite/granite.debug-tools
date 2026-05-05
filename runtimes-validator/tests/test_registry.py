@@ -1,10 +1,10 @@
-from granite_validation.engines.registry import list_engines
-from granite_validation.tests.registry import discover_tests, get_tests, list_tests
+from runtimes_validator.engines.registry import list_engines
+from runtimes_validator.tests.registry import discover_tests, get_tests, list_tests
 
 # Trigger engine registration
-import granite_validation.engines.ollama  # noqa: F401
-import granite_validation.engines.vllm  # noqa: F401
-import granite_validation.engines.llamacpp  # noqa: F401
+import runtimes_validator.engines.ollama  # noqa: F401
+import runtimes_validator.engines.vllm  # noqa: F401
+import runtimes_validator.engines.llamacpp  # noqa: F401
 
 COMMON_IDS = {
     "basic_generation",

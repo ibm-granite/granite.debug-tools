@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from granite_validation.engines.base import EngineConfig
-from granite_validation.engines.ollama import OllamaEngine
+from runtimes_validator.engines.base import EngineConfig
+from runtimes_validator.engines.ollama import OllamaEngine
 
 
 # --- Helpers ---
@@ -90,13 +90,13 @@ def managed_start_env():
     Returns a dict with keys: popen, process, health_get, ollama_get, post, stderr_file.
     """
     with (
-        patch("granite_validation.engines.ollama.shutil.which", return_value="/usr/bin/ollama"),
-        patch("granite_validation.engines.ollama.subprocess.Popen") as mock_popen,
-        patch("granite_validation.engines.openai_compat.requests.get") as mock_compat_get,
-        patch("granite_validation.engines.ollama.time.sleep"),
-        patch("granite_validation.engines.ollama.requests.get") as mock_ollama_get,
-        patch("granite_validation.engines.ollama.requests.post") as mock_post,
-        patch("granite_validation.engines.ollama.tempfile.TemporaryFile") as mock_tmp,
+        patch("runtimes_validator.engines.ollama.shutil.which", return_value="/usr/bin/ollama"),
+        patch("runtimes_validator.engines.ollama.subprocess.Popen") as mock_popen,
+        patch("runtimes_validator.engines.openai_compat.requests.get") as mock_compat_get,
+        patch("runtimes_validator.engines.ollama.time.sleep"),
+        patch("runtimes_validator.engines.ollama.requests.get") as mock_ollama_get,
+        patch("runtimes_validator.engines.ollama.requests.post") as mock_post,
+        patch("runtimes_validator.engines.ollama.tempfile.TemporaryFile") as mock_tmp,
     ):
         proc = _make_mock_process()
         mock_popen.return_value = proc
@@ -154,7 +154,7 @@ def test_ollama_get_info():
 # --- health_check() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_ollama_health_check_hits_api_version(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = OllamaEngine(EngineConfig(base_url="http://myhost:11434"))
@@ -165,14 +165,14 @@ def test_ollama_health_check_hits_api_version(mock_get: MagicMock):
     assert url == "http://myhost:11434/api/version"
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_ollama_health_check_returns_true_on_200(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = OllamaEngine(EngineConfig())
     assert engine.health_check() is True
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_ollama_health_check_returns_false_on_connection_error(mock_get: MagicMock):
     mock_get.side_effect = requests.ConnectionError("refused")
     engine = OllamaEngine(EngineConfig())
@@ -182,7 +182,7 @@ def test_ollama_health_check_returns_false_on_connection_error(mock_get: MagicMo
 # --- chat() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_ollama_chat_posts_to_correct_url(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = OllamaEngine(EngineConfig(base_url="http://gpu:11434", model_id="granite3.3:8b"))
@@ -193,7 +193,7 @@ def test_ollama_chat_posts_to_correct_url(mock_post: MagicMock):
     assert url == "http://gpu:11434/v1/chat/completions"
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_ollama_chat_includes_model(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = OllamaEngine(EngineConfig(model_id="granite3.3:8b"))
@@ -213,15 +213,15 @@ def test_start_rejects_external_mode():
         engine.start("granite3.3:8b")
 
 
-@patch("granite_validation.engines.ollama.shutil.which", return_value=None)
+@patch("runtimes_validator.engines.ollama.shutil.which", return_value=None)
 def test_start_binary_not_found(mock_which: MagicMock):
     engine = OllamaEngine(EngineConfig(mode="managed"))
     with pytest.raises(RuntimeError, match="'ollama' binary not found"):
         engine.start("granite3.3:8b")
 
 
-@patch("granite_validation.engines.ollama.tempfile.TemporaryFile")
-@patch("granite_validation.engines.ollama.shutil.which", return_value=None)
+@patch("runtimes_validator.engines.ollama.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.ollama.shutil.which", return_value=None)
 def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMock):
     """When ollama_bin is set in extra, it is used directly without calling shutil.which."""
     config = EngineConfig(
@@ -230,7 +230,7 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
     )
     engine = OllamaEngine(config)
 
-    with patch("granite_validation.engines.ollama.subprocess.Popen") as mock_popen:
+    with patch("runtimes_validator.engines.ollama.subprocess.Popen") as mock_popen:
         proc = _make_mock_process(poll_returns=1)
         mock_popen.return_value = proc
         mock_tmp.return_value = _make_stderr_file(b"bind error")
@@ -242,12 +242,12 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
         assert cmd[0] == "/custom/ollama"
 
 
-@patch("granite_validation.engines.ollama.tempfile.TemporaryFile")
-@patch("granite_validation.engines.ollama.time.sleep")
-@patch("granite_validation.engines.ollama.requests.post")
-@patch("granite_validation.engines.ollama.requests.get")
-@patch("granite_validation.engines.ollama.subprocess.Popen")
-@patch("granite_validation.engines.ollama.shutil.which", return_value="/usr/bin/ollama")
+@patch("runtimes_validator.engines.ollama.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.ollama.time.sleep")
+@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.get")
+@patch("runtimes_validator.engines.ollama.subprocess.Popen")
+@patch("runtimes_validator.engines.ollama.shutil.which", return_value="/usr/bin/ollama")
 def test_start_process_exits_immediately(
     mock_which, mock_popen, mock_get, mock_post, mock_sleep, mock_tmp
 ):
@@ -261,12 +261,12 @@ def test_start_process_exits_immediately(
     assert "address already in use" in str(exc_info.value)
 
 
-@patch("granite_validation.engines.ollama.tempfile.TemporaryFile")
-@patch("granite_validation.engines.ollama.time.sleep")
-@patch("granite_validation.engines.ollama.time.monotonic")
-@patch("granite_validation.engines.openai_compat.requests.get")
-@patch("granite_validation.engines.ollama.subprocess.Popen")
-@patch("granite_validation.engines.ollama.shutil.which", return_value="/usr/bin/ollama")
+@patch("runtimes_validator.engines.ollama.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.ollama.time.sleep")
+@patch("runtimes_validator.engines.ollama.time.monotonic")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.ollama.subprocess.Popen")
+@patch("runtimes_validator.engines.ollama.shutil.which", return_value="/usr/bin/ollama")
 def test_start_health_timeout(
     mock_which, mock_popen, mock_get, mock_monotonic, mock_sleep, mock_tmp
 ):
@@ -438,7 +438,7 @@ def test_get_info_returns_version_after_start():
 # --- _fetch_version failure ---
 
 
-@patch("granite_validation.engines.ollama.requests.get")
+@patch("runtimes_validator.engines.ollama.requests.get")
 def test_fetch_version_handles_failure(mock_get: MagicMock):
     mock_get.side_effect = requests.ConnectionError("refused")
     engine = OllamaEngine(EngineConfig())
@@ -448,7 +448,7 @@ def test_fetch_version_handles_failure(mock_get: MagicMock):
     assert engine._ollama_version is None
 
 
-@patch("granite_validation.engines.ollama.requests.get")
+@patch("runtimes_validator.engines.ollama.requests.get")
 def test_fetch_version_handles_non_200(mock_get: MagicMock):
     resp = MagicMock()
     resp.status_code = 503
@@ -504,7 +504,7 @@ def test_read_stderr_truncates_to_last_4096_bytes():
 # --- _ensure_model HTTP error ---
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_ensure_model_http_500(mock_post: MagicMock):
     resp = MagicMock()
     resp.status_code = 500
@@ -553,7 +553,7 @@ def test_resolve_model_falls_back_to_config():
 # --- generate() ---
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_generate_basic(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({
         "response": "Paris", "done": True,
@@ -571,7 +571,7 @@ def test_generate_basic(mock_post: MagicMock):
     assert payload["stream"] is False
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_generate_with_all_options(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({"response": "ok"})
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -595,7 +595,7 @@ def test_generate_with_all_options(mock_post: MagicMock):
     assert mock_post.call_args.kwargs["timeout"] == 300
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_generate_sends_headers(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({"response": ""})
     headers = {"X-Key": "val"}
@@ -609,7 +609,7 @@ def test_generate_sends_headers(mock_post: MagicMock):
 # --- generate_stream() ---
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_generate_stream_yields_chunks(mock_post: MagicMock):
     ndjson_lines = [
         '{"response":"Hello","done":false}',
@@ -627,7 +627,7 @@ def test_generate_stream_yields_chunks(mock_post: MagicMock):
     assert chunks[2]["done"] is True
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_generate_stream_sends_correct_payload(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response([])
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -644,7 +644,7 @@ def test_generate_stream_sends_correct_payload(mock_post: MagicMock):
     assert mock_post.call_args.kwargs["timeout"] == 200
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_generate_stream_skips_empty_lines(mock_post: MagicMock):
     ndjson_lines = [
         "",
@@ -662,7 +662,7 @@ def test_generate_stream_skips_empty_lines(mock_post: MagicMock):
 # --- native_chat() ---
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_native_chat_basic(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({
         "message": {"role": "assistant", "content": "Hi!"},
@@ -683,7 +683,7 @@ def test_native_chat_basic(mock_post: MagicMock):
     assert payload["stream"] is False
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_native_chat_with_tools_and_options(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({"message": {}, "done": True})
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -705,7 +705,7 @@ def test_native_chat_with_tools_and_options(mock_post: MagicMock):
 # --- native_chat_stream() ---
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_native_chat_stream_yields_chunks(mock_post: MagicMock):
     ndjson_lines = [
         '{"message":{"content":"Hi"},"done":false}',
@@ -723,7 +723,7 @@ def test_native_chat_stream_yields_chunks(mock_post: MagicMock):
     assert chunks[1]["done"] is True
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_native_chat_stream_sends_correct_payload(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response([])
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -746,7 +746,7 @@ def test_native_chat_stream_sends_correct_payload(mock_post: MagicMock):
 # --- show() ---
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_show_basic(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({
         "modelfile": "FROM granite3.3:8b",
@@ -766,7 +766,7 @@ def test_show_basic(mock_post: MagicMock):
     assert payload["model"] == "granite3.3:8b"
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_show_with_explicit_model(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({"modelfile": "..."})
     engine = OllamaEngine(EngineConfig(model_id="default"))
@@ -777,7 +777,7 @@ def test_show_with_explicit_model(mock_post: MagicMock):
     assert payload["model"] == "override"
 
 
-@patch("granite_validation.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.ollama.requests.post")
 def test_show_sends_headers(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({})
     headers = {"Authorization": "Bearer tok"}
