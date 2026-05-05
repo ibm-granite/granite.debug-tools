@@ -10,3 +10,5 @@ build/
 *.egg
 .coverage
 htmlcov/
+weekly_matrix.local.toml
+results/

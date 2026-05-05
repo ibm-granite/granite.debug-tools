@@ -1,0 +1,42 @@
+[meta]
+description = "Weekly Granite 4.1 validation matrix"
+
+[engines.ollama]
+version = "0.22.0"
+mode = "external"
+extra = { skip_pull = false }
+
+[engines.llamacpp]
+version = "b8680"
+mode = "managed"
+# extra.n_gpu_layers = 99   # uncomment for GPU
+
+[engines.vllm]
+version = "0.19.1"
+mode = "external"
+base_url = "http://localhost:8000"
+headers = ["RITS_API_KEY: <secret>"]
+
+[models.granite-4_1-3b]
+ollama = "granite4.1:3b"
+llamacpp = "/path/to/granite-4.1-3b-f16.gguf"
+[models.granite-4_1-3b.vllm]
+model = "ibm-granite/granite-4.1-3b"
+base_url = "https://vllm-instance.com/granite-4-1-3b"
+
+[models.granite-4_1-8b]
+ollama = "granite4.1:8b"
+llamacpp = "/path/to/granite-4.1-8b-q4_k_m.gguf"
+
+[models.granite-4_1-8b.vllm]
+model = "ibm-granite/granite-4.1-8b"
+base_url = "https://vllm-instance.com/granite-4-1-8b"
+
+[models.granite-4_1-30b.vllm]
+model = "ibm-granite/granite-4.1-30b"
+base_url = "https://vllm-instance.com/granite-4-1-30b"
+
+# [models.granite-4_1-30b]
+# ollama = "granite3.3:30b"
+# llamacpp = "/path/to/granite-4.1-30b-instruct-Q4_K_M.gguf"
+# vllm = "ibm-granite/granite-4.1-30b-instruct"
