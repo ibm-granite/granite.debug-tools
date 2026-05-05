@@ -46,60 +46,82 @@ class TokenizationTest(AbstractValidationTest):
         )
 
     def _check_roundtrip(
-        self, engine: LlamaCppEngine, checks: list[CheckResult],
+        self,
+        engine: LlamaCppEngine,
+        checks: list[CheckResult],
     ) -> None:
         text = "Hello, how are you today?"
 
         try:
             tokens = engine.tokenize(text)
         except Exception as e:
-            checks.append(CheckResult(
-                name="tokenize_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="tokenize_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
-        checks.append(CheckResult(
-            name="tokenize_produces_tokens",
-            passed=len(tokens) > 0,
-            expected="> 0 tokens",
-            actual=len(tokens),
-        ))
+        checks.append(
+            CheckResult(
+                name="tokenize_produces_tokens",
+                passed=len(tokens) > 0,
+                expected="> 0 tokens",
+                actual=len(tokens),
+            )
+        )
 
         try:
             roundtrip_text = engine.detokenize(tokens)
         except Exception as e:
-            checks.append(CheckResult(
-                name="detokenize_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="detokenize_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
-        checks.append(CheckResult(
-            name="roundtrip_matches_original",
-            passed=roundtrip_text == text,
-            expected=text,
-            actual=roundtrip_text,
-        ))
+        checks.append(
+            CheckResult(
+                name="roundtrip_matches_original",
+                passed=roundtrip_text == text,
+                expected=text,
+                actual=roundtrip_text,
+            )
+        )
 
     def _check_special_tokens(
-        self, engine: LlamaCppEngine, checks: list[CheckResult],
+        self,
+        engine: LlamaCppEngine,
+        checks: list[CheckResult],
     ) -> None:
         for token_str in _SPECIAL_TOKENS:
             safe_name = token_str.strip("<|>").replace("|", "_")
             try:
                 token_ids = engine.tokenize(
-                    token_str, add_special=False, parse_special=True,
+                    token_str,
+                    add_special=False,
+                    parse_special=True,
                 )
             except Exception as e:
-                checks.append(CheckResult(
-                    name=f"special_token_{safe_name}_error",
-                    passed=False,
-                    detail=str(e),
-                ))
+                checks.append(
+                    CheckResult(
+                        name=f"special_token_{safe_name}_error",
+                        passed=False,
+                        detail=str(e),
+                    )
+                )
                 continue
 
-            checks.append(CheckResult(
-                name=f"special_token_{safe_name}",
-                passed=len(token_ids) == 1,
-                expected=f"'{token_str}' -> 1 token",
-                actual=f"{len(token_ids)} tokens",
-            ))
+            checks.append(
+                CheckResult(
+                    name=f"special_token_{safe_name}",
+                    passed=len(token_ids) == 1,
+                    expected=f"'{token_str}' -> 1 token",
+                    actual=f"{len(token_ids)} tokens",
+                )
+            )

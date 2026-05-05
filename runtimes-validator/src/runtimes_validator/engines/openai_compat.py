@@ -25,9 +25,7 @@ class OpenAICompatibleEngine(AbstractEngine):
         self._config = config
         self._base_url = config.base_url or f"http://localhost:{self._DEFAULT_PORT}"
         self._headers: dict[str, str] = config.extra.get("headers", {})
-        self._http_timeout: int = config.extra.get(
-            "request_timeout", _DEFAULT_HTTP_TIMEOUT
-        )
+        self._http_timeout: int = config.extra.get("request_timeout", _DEFAULT_HTTP_TIMEOUT)
         self._last_timeout: bool = False
         self._timeout_observed: bool = False
 
@@ -142,7 +140,7 @@ class OpenAICompatibleEngine(AbstractEngine):
         try:
             for line in resp.iter_lines(decode_unicode=True):
                 if line and line.startswith("data: "):
-                    data = line[len("data: "):]
+                    data = line[len("data: ") :]
                     if data.strip() == "[DONE]":
                         break
                     yield json.loads(data)

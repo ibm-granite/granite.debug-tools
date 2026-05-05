@@ -59,69 +59,91 @@ class StreamingTest(AbstractValidationTest):
         )
 
     def _check_chat_streaming(
-        self, engine: LlamaCppEngine, checks: list[CheckResult],
+        self,
+        engine: LlamaCppEngine,
+        checks: list[CheckResult],
     ) -> None:
         try:
-            chunks = list(engine.chat_stream(
-                [
-                    {"role": "system", "content": "Be brief."},
-                    {"role": "user", "content": "Say hello."},
-                ],
-                max_tokens=32,
-                temperature=0.0,
-            ))
+            chunks = list(
+                engine.chat_stream(
+                    [
+                        {"role": "system", "content": "Be brief."},
+                        {"role": "user", "content": "Say hello."},
+                    ],
+                    max_tokens=32,
+                    temperature=0.0,
+                )
+            )
         except Exception as e:
-            checks.append(CheckResult(
-                name="streaming_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="streaming_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
-        checks.append(CheckResult(
-            name="streaming_multiple_chunks",
-            passed=len(chunks) > 1,
-            expected="> 1 chunk",
-            actual=len(chunks),
-        ))
+        checks.append(
+            CheckResult(
+                name="streaming_multiple_chunks",
+                passed=len(chunks) > 1,
+                expected="> 1 chunk",
+                actual=len(chunks),
+            )
+        )
 
         data_chunks = [c for c in chunks if c.get("choices")]
         if data_chunks:
             last = data_chunks[-1]
             fr = last["choices"][0].get("finish_reason")
-            checks.append(CheckResult(
-                name="streaming_last_chunk_finish_reason",
-                passed=fr in ("stop", "length"),
-                expected="stop or length",
-                actual=fr,
-            ))
+            checks.append(
+                CheckResult(
+                    name="streaming_last_chunk_finish_reason",
+                    passed=fr in ("stop", "length"),
+                    expected="stop or length",
+                    actual=fr,
+                )
+            )
 
     def _check_tool_streaming(
-        self, engine: LlamaCppEngine, checks: list[CheckResult],
+        self,
+        engine: LlamaCppEngine,
+        checks: list[CheckResult],
     ) -> None:
         try:
-            chunks = list(engine.chat_stream(
-                [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "What is the weather in London?"},
-                ],
-                tools=[WEATHER_TOOL],
-                tool_choice="required",
-                max_tokens=256,
-                temperature=0.0,
-            ))
+            chunks = list(
+                engine.chat_stream(
+                    [
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": "What is the weather in London?"},
+                    ],
+                    tools=[WEATHER_TOOL],
+                    tool_choice="required",
+                    max_tokens=256,
+                    temperature=0.0,
+                )
+            )
         except Exception as e:
-            checks.append(CheckResult(
-                name="streaming_tool_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="streaming_tool_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
         tool_call_chunks = [
-            c for c in chunks
-            if c.get("choices")
-            and c["choices"][0].get("delta", {}).get("tool_calls")
+            c
+            for c in chunks
+            if c.get("choices") and c["choices"][0].get("delta", {}).get("tool_calls")
         ]
-        checks.append(CheckResult(
-            name="streaming_tool_has_tool_chunks",
-            passed=len(tool_call_chunks) > 0,
-            expected="> 0 tool call chunks",
-            actual=len(tool_call_chunks),
-        ))
+        checks.append(
+            CheckResult(
+                name="streaming_tool_has_tool_chunks",
+                passed=len(tool_call_chunks) > 0,
+                expected="> 0 tool call chunks",
+                actual=len(tool_call_chunks),
+            )
+        )

@@ -105,8 +105,8 @@ class ValidationRunner:
         return (
             "Tool tests are selected but vLLM server_args is missing required flags: "
             f"{', '.join(missing)}. "
-            "Add them via --extra '{\"server_args\": [\"--enable-auto-tool-choice\", "
-            "\"--tool-call-parser\", \"<parser>\"]}' "
+            'Add them via --extra \'{"server_args": ["--enable-auto-tool-choice", '
+            '"--tool-call-parser", "<parser>"]}\' '
             "(e.g. --tool-call-parser granite for Granite models)."
         )
 

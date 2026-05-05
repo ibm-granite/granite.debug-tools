@@ -50,18 +50,22 @@ class MultiTurnTest(AbstractValidationTest):
 
         content = (response.get("content") or "").lower()
 
-        checks.append(CheckResult(
-            name="context_retention_alice",
-            passed="alice" in content,
-            expected="'alice' in response",
-            actual=content[:200],
-        ))
-        checks.append(CheckResult(
-            name="response_role",
-            passed=response.get("role") == "assistant",
-            expected="assistant",
-            actual=response.get("role"),
-        ))
+        checks.append(
+            CheckResult(
+                name="context_retention_alice",
+                passed="alice" in content,
+                expected="'alice' in response",
+                actual=content[:200],
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="response_role",
+                passed=response.get("role") == "assistant",
+                expected="assistant",
+                actual=response.get("role"),
+            )
+        )
 
         return TestResult(
             test_id=self.test_id(),

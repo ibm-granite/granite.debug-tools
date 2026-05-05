@@ -270,9 +270,7 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
 @patch("runtimes_validator.engines.vllm.requests.get")
 @patch("runtimes_validator.engines.vllm.subprocess.Popen")
 @patch("runtimes_validator.engines.vllm.shutil.which", return_value="/usr/bin/vllm")
-def test_start_process_exits_immediately(
-    mock_which, mock_popen, mock_get, mock_sleep, mock_tmp
-):
+def test_start_process_exits_immediately(mock_which, mock_popen, mock_get, mock_sleep, mock_tmp):
     proc = _make_mock_process(poll_returns=1)
     mock_popen.return_value = proc
     mock_tmp.return_value = _make_stderr_file(b"CUDA out of memory")

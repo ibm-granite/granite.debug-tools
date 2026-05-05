@@ -41,10 +41,14 @@ class ContextShiftTest(AbstractValidationTest):
                 temperature=0.0,
             )
         except Exception as e:
-            checks.append(CheckResult(
-                name="context_shift_status_200", passed=False,
-                expected=200, actual=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="context_shift_status_200",
+                    passed=False,
+                    expected=200,
+                    actual=str(e),
+                )
+            )
             return TestResult(
                 test_id=self.test_id(),
                 test_name=self.test_name(),
@@ -54,20 +58,24 @@ class ContextShiftTest(AbstractValidationTest):
                 elapsed_seconds=time.time() - start,
             )
 
-        checks.append(CheckResult(
-            name="context_shift_status_200",
-            passed=True,
-            expected=200,
-            actual=200,
-        ))
+        checks.append(
+            CheckResult(
+                name="context_shift_status_200",
+                passed=True,
+                expected=200,
+                actual=200,
+            )
+        )
 
         finish_reason = result.get("finish_reason")
-        checks.append(CheckResult(
-            name="context_shift_finish_reason",
-            passed=finish_reason in ("stop", "length"),
-            expected="stop or length",
-            actual=finish_reason,
-        ))
+        checks.append(
+            CheckResult(
+                name="context_shift_finish_reason",
+                passed=finish_reason in ("stop", "length"),
+                expected="stop or length",
+                actual=finish_reason,
+            )
+        )
 
         return TestResult(
             test_id=self.test_id(),

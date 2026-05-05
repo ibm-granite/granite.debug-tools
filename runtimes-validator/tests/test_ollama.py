@@ -416,7 +416,6 @@ def test_stop_force_kill_wait_timeout():
     with pytest.raises(subprocess.TimeoutExpired):
         engine.stop()
 
-
     proc.terminate.assert_called_once()
     proc.kill.assert_called_once()
     # Process and stderr are still cleaned up via finally
@@ -555,9 +554,12 @@ def test_resolve_model_falls_back_to_config():
 
 @patch("runtimes_validator.engines.ollama.requests.post")
 def test_generate_basic(mock_post: MagicMock):
-    mock_post.return_value = _fake_json_response({
-        "response": "Paris", "done": True,
-    })
+    mock_post.return_value = _fake_json_response(
+        {
+            "response": "Paris",
+            "done": True,
+        }
+    )
     engine = OllamaEngine(EngineConfig(model_id="granite3.3:8b"))
 
     body = engine.generate("Capital of France?")
@@ -632,9 +634,14 @@ def test_generate_stream_sends_correct_payload(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response([])
     engine = OllamaEngine(EngineConfig(model_id="m"))
 
-    list(engine.generate_stream(
-        "hi", model="override", options={"num_predict": 50}, timeout=200,
-    ))
+    list(
+        engine.generate_stream(
+            "hi",
+            model="override",
+            options={"num_predict": 50},
+            timeout=200,
+        )
+    )
 
     payload = mock_post.call_args.kwargs["json"]
     assert payload["stream"] is True
@@ -664,11 +671,13 @@ def test_generate_stream_skips_empty_lines(mock_post: MagicMock):
 
 @patch("runtimes_validator.engines.ollama.requests.post")
 def test_native_chat_basic(mock_post: MagicMock):
-    mock_post.return_value = _fake_json_response({
-        "message": {"role": "assistant", "content": "Hi!"},
-        "done": True,
-        "done_reason": "stop",
-    })
+    mock_post.return_value = _fake_json_response(
+        {
+            "message": {"role": "assistant", "content": "Hi!"},
+            "done": True,
+            "done_reason": "stop",
+        }
+    )
     engine = OllamaEngine(EngineConfig(model_id="granite3.3:8b"))
     messages = [{"role": "user", "content": "Hello"}]
 
@@ -714,9 +723,11 @@ def test_native_chat_stream_yields_chunks(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response(ndjson_lines)
     engine = OllamaEngine(EngineConfig(model_id="m"))
 
-    chunks = list(engine.native_chat_stream(
-        [{"role": "user", "content": "hello"}],
-    ))
+    chunks = list(
+        engine.native_chat_stream(
+            [{"role": "user", "content": "hello"}],
+        )
+    )
 
     assert len(chunks) == 2
     assert chunks[0]["message"]["content"] == "Hi"
@@ -729,12 +740,14 @@ def test_native_chat_stream_sends_correct_payload(mock_post: MagicMock):
     engine = OllamaEngine(EngineConfig(model_id="m"))
     tools = [{"type": "function", "function": {"name": "f"}}]
 
-    list(engine.native_chat_stream(
-        [{"role": "user", "content": "hi"}],
-        model="override",
-        tools=tools,
-        options={"temperature": 0},
-    ))
+    list(
+        engine.native_chat_stream(
+            [{"role": "user", "content": "hi"}],
+            model="override",
+            tools=tools,
+            options={"temperature": 0},
+        )
+    )
 
     payload = mock_post.call_args.kwargs["json"]
     assert payload["stream"] is True
@@ -748,12 +761,14 @@ def test_native_chat_stream_sends_correct_payload(mock_post: MagicMock):
 
 @patch("runtimes_validator.engines.ollama.requests.post")
 def test_show_basic(mock_post: MagicMock):
-    mock_post.return_value = _fake_json_response({
-        "modelfile": "FROM granite3.3:8b",
-        "details": {"family": "granite", "parameter_size": "8B"},
-        "template": "...",
-        "model_info": {"key": "value"},
-    })
+    mock_post.return_value = _fake_json_response(
+        {
+            "modelfile": "FROM granite3.3:8b",
+            "details": {"family": "granite", "parameter_size": "8B"},
+            "template": "...",
+            "model_info": {"key": "value"},
+        }
+    )
     engine = OllamaEngine(EngineConfig(model_id="granite3.3:8b"))
 
     body = engine.show()

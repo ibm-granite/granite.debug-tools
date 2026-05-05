@@ -43,7 +43,10 @@ class OllamaGenerateTest(AbstractValidationTest):
         )
 
     def _check_system_prompt(
-        self, engine: OllamaEngine, model: str, checks: list[CheckResult],
+        self,
+        engine: OllamaEngine,
+        model: str,
+        checks: list[CheckResult],
     ) -> None:
         try:
             body = engine.generate(
@@ -57,73 +60,103 @@ class OllamaGenerateTest(AbstractValidationTest):
             return
 
         content = body.get("response", "")
-        checks.append(CheckResult(
-            name="system_prompt_has_response",
-            passed=bool(content),
-            expected="non-empty response",
-            actual=content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="system_prompt_has_response",
+                passed=bool(content),
+                expected="non-empty response",
+                actual=content[:200],
+            )
+        )
 
         lower = content.lower()
         keywords = ("granitebot", "granite")
         found = [kw for kw in keywords if kw in lower]
-        checks.append(CheckResult(
-            name="system_prompt_keyword",
-            passed=len(found) > 0,
-            expected=f"at least one of {keywords}",
-            actual=f"found: {found}" if found else content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="system_prompt_keyword",
+                passed=len(found) > 0,
+                expected=f"at least one of {keywords}",
+                actual=f"found: {found}" if found else content[:200],
+            )
+        )
 
     def _check_reproducibility(
-        self, engine: OllamaEngine, model: str, checks: list[CheckResult],
+        self,
+        engine: OllamaEngine,
+        model: str,
+        checks: list[CheckResult],
     ) -> None:
         options = {"temperature": 0, "seed": 42, "num_predict": 50}
 
         try:
             body1 = engine.generate(
-                "Count from 1 to 10.", model=model, options=options,
+                "Count from 1 to 10.",
+                model=model,
+                options=options,
             )
         except Exception as e:
-            checks.append(CheckResult(
-                name="reproducibility_run1_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="reproducibility_run1_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
         output1 = body1.get("response", "")
-        checks.append(CheckResult(
-            name="reproducibility_run1_has_response",
-            passed=bool(output1),
-            expected="non-empty response",
-            actual=output1[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="reproducibility_run1_has_response",
+                passed=bool(output1),
+                expected="non-empty response",
+                actual=output1[:200],
+            )
+        )
 
         try:
             body2 = engine.generate(
-                "Count from 1 to 10.", model=model, options=options,
+                "Count from 1 to 10.",
+                model=model,
+                options=options,
             )
         except Exception as e:
-            checks.append(CheckResult(
-                name="reproducibility_run2_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="reproducibility_run2_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
         output2 = body2.get("response", "")
-        checks.append(CheckResult(
-            name="reproducibility_run2_has_response",
-            passed=bool(output2),
-            expected="non-empty response",
-            actual=output2[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="reproducibility_run2_has_response",
+                passed=bool(output2),
+                expected="non-empty response",
+                actual=output2[:200],
+            )
+        )
 
-        checks.append(CheckResult(
-            name="reproducibility_outputs_match",
-            passed=output1 == output2,
-            expected="identical outputs",
-            actual="match" if output1 == output2 else f"differ: {output1[:100]!r} vs {output2[:100]!r}",
-        ))
+        checks.append(
+            CheckResult(
+                name="reproducibility_outputs_match",
+                passed=output1 == output2,
+                expected="identical outputs",
+                actual="match"
+                if output1 == output2
+                else f"differ: {output1[:100]!r} vs {output2[:100]!r}",
+            )
+        )
 
     def _check_small_context(
-        self, engine: OllamaEngine, model: str, checks: list[CheckResult],
+        self,
+        engine: OllamaEngine,
+        model: str,
+        checks: list[CheckResult],
     ) -> None:
         try:
             body = engine.generate(
@@ -132,21 +165,30 @@ class OllamaGenerateTest(AbstractValidationTest):
                 options={"temperature": 0, "num_ctx": 128, "num_predict": 50},
             )
         except Exception as e:
-            checks.append(CheckResult(
-                name="small_context_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="small_context_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
         content = body.get("response", "")
-        checks.append(CheckResult(
-            name="small_context_has_response",
-            passed=bool(content),
-            expected="non-empty response (no crash with num_ctx=128)",
-            actual=content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="small_context_has_response",
+                passed=bool(content),
+                expected="non-empty response (no crash with num_ctx=128)",
+                actual=content[:200],
+            )
+        )
 
     def _check_generate_metrics(
-        self, engine: OllamaEngine, model: str, checks: list[CheckResult],
+        self,
+        engine: OllamaEngine,
+        model: str,
+        checks: list[CheckResult],
     ) -> None:
         try:
             body = engine.generate(
@@ -155,32 +197,45 @@ class OllamaGenerateTest(AbstractValidationTest):
                 options={"num_predict": 20},
             )
         except Exception as e:
-            checks.append(CheckResult(
-                name="generate_metrics_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="generate_metrics_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
-        checks.append(CheckResult(
-            name="generate_metrics_total_duration",
-            passed=body.get("total_duration", 0) > 0,
-            expected="> 0",
-            actual=body.get("total_duration"),
-        ))
-        checks.append(CheckResult(
-            name="generate_metrics_eval_count",
-            passed=body.get("eval_count", 0) > 0,
-            expected="> 0",
-            actual=body.get("eval_count"),
-        ))
-        checks.append(CheckResult(
-            name="generate_metrics_eval_duration",
-            passed=body.get("eval_duration", 0) > 0,
-            expected="> 0",
-            actual=body.get("eval_duration"),
-        ))
+        checks.append(
+            CheckResult(
+                name="generate_metrics_total_duration",
+                passed=body.get("total_duration", 0) > 0,
+                expected="> 0",
+                actual=body.get("total_duration"),
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="generate_metrics_eval_count",
+                passed=body.get("eval_count", 0) > 0,
+                expected="> 0",
+                actual=body.get("eval_count"),
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="generate_metrics_eval_duration",
+                passed=body.get("eval_duration", 0) > 0,
+                expected="> 0",
+                actual=body.get("eval_duration"),
+            )
+        )
 
     def _check_chat_metrics(
-        self, engine: OllamaEngine, model: str, checks: list[CheckResult],
+        self,
+        engine: OllamaEngine,
+        model: str,
+        checks: list[CheckResult],
     ) -> None:
         try:
             body = engine.native_chat(
@@ -189,26 +244,36 @@ class OllamaGenerateTest(AbstractValidationTest):
                 options={"num_predict": 20},
             )
         except Exception as e:
-            checks.append(CheckResult(
-                name="chat_metrics_error", passed=False, detail=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="chat_metrics_error",
+                    passed=False,
+                    detail=str(e),
+                )
+            )
             return
 
-        checks.append(CheckResult(
-            name="chat_metrics_total_duration",
-            passed=body.get("total_duration", 0) > 0,
-            expected="> 0",
-            actual=body.get("total_duration"),
-        ))
-        checks.append(CheckResult(
-            name="chat_metrics_eval_count",
-            passed=body.get("eval_count", 0) > 0,
-            expected="> 0",
-            actual=body.get("eval_count"),
-        ))
-        checks.append(CheckResult(
-            name="chat_metrics_done_reason",
-            passed=bool(body.get("done_reason")),
-            expected="non-empty done_reason",
-            actual=body.get("done_reason"),
-        ))
+        checks.append(
+            CheckResult(
+                name="chat_metrics_total_duration",
+                passed=body.get("total_duration", 0) > 0,
+                expected="> 0",
+                actual=body.get("total_duration"),
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="chat_metrics_eval_count",
+                passed=body.get("eval_count", 0) > 0,
+                expected="> 0",
+                actual=body.get("eval_count"),
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="chat_metrics_done_reason",
+                passed=bool(body.get("done_reason")),
+                expected="non-empty done_reason",
+                actual=body.get("done_reason"),
+            )
+        )

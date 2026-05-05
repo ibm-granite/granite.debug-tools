@@ -260,7 +260,10 @@ class OllamaEngine(OpenAICompatibleEngine):
                 yield json.loads(line)
 
     def show(
-        self, *, model: str | None = None, timeout: int = 30,
+        self,
+        *,
+        model: str | None = None,
+        timeout: int = 30,
     ) -> dict[str, Any]:
         """Fetch model metadata from ``/api/show``."""
         resp = requests.post(
@@ -331,7 +334,7 @@ class OllamaEngine(OpenAICompatibleEngine):
         if self._config.extra.get("skip_pull", False):
             logger.info("Skipping model pull (skip_pull=true)")
             return
-        
+
         pull_timeout = self._config.extra.get("pull_timeout", _DEFAULT_PULL_TIMEOUT)
         logger.info("Ensuring model '%s' is available (pull timeout: %ds)", model, pull_timeout)
 

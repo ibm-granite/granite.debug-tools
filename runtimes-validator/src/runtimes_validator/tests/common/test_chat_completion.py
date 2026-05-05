@@ -48,43 +48,51 @@ class ChatCompletionTest(AbstractValidationTest):
             checks.append(CheckResult(name="basic_error", passed=False, detail=str(e)))
             return
 
-        checks.append(CheckResult(
-            name="basic_role",
-            passed=response.get("role") == "assistant",
-            expected="assistant",
-            actual=response.get("role"),
-        ))
-        checks.append(CheckResult(
-            name="basic_content_nonempty",
-            passed=bool(response.get("content")),
-            expected="non-empty content",
-            actual=response.get("content", "")[:200],
-        ))
-        checks.append(CheckResult(
-            name="basic_finish_reason",
-            passed=response.get("finish_reason") in ("stop", "length"),
-            expected="stop or length",
-            actual=response.get("finish_reason"),
-        ))
+        checks.append(
+            CheckResult(
+                name="basic_role",
+                passed=response.get("role") == "assistant",
+                expected="assistant",
+                actual=response.get("role"),
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="basic_content_nonempty",
+                passed=bool(response.get("content")),
+                expected="non-empty content",
+                actual=response.get("content", "")[:200],
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="basic_finish_reason",
+                passed=response.get("finish_reason") in ("stop", "length"),
+                expected="stop or length",
+                actual=response.get("finish_reason"),
+            )
+        )
 
         usage = response.get("usage")
         if usage is not None:
-            checks.append(CheckResult(
-                name="basic_prompt_tokens",
-                passed=usage.get("prompt_tokens", 0) > 0,
-                expected="> 0",
-                actual=usage.get("prompt_tokens"),
-            ))
-            checks.append(CheckResult(
-                name="basic_completion_tokens",
-                passed=usage.get("completion_tokens", 0) > 0,
-                expected="> 0",
-                actual=usage.get("completion_tokens"),
-            ))
+            checks.append(
+                CheckResult(
+                    name="basic_prompt_tokens",
+                    passed=usage.get("prompt_tokens", 0) > 0,
+                    expected="> 0",
+                    actual=usage.get("prompt_tokens"),
+                )
+            )
+            checks.append(
+                CheckResult(
+                    name="basic_completion_tokens",
+                    passed=usage.get("completion_tokens", 0) > 0,
+                    expected="> 0",
+                    actual=usage.get("completion_tokens"),
+                )
+            )
 
-    def _check_no_system(
-        self, engine: AbstractEngine, checks: list[CheckResult]
-    ) -> None:
+    def _check_no_system(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
             response = engine.chat(
                 [{"role": "user", "content": "Say hello."}],
@@ -94,22 +102,24 @@ class ChatCompletionTest(AbstractValidationTest):
             checks.append(CheckResult(name="no_system_error", passed=False, detail=str(e)))
             return
 
-        checks.append(CheckResult(
-            name="no_system_role",
-            passed=response.get("role") == "assistant",
-            expected="assistant",
-            actual=response.get("role"),
-        ))
-        checks.append(CheckResult(
-            name="no_system_content_nonempty",
-            passed=bool(response.get("content")),
-            expected="non-empty content",
-            actual=response.get("content", "")[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="no_system_role",
+                passed=response.get("role") == "assistant",
+                expected="assistant",
+                actual=response.get("role"),
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="no_system_content_nonempty",
+                passed=bool(response.get("content")),
+                expected="non-empty content",
+                actual=response.get("content", "")[:200],
+            )
+        )
 
-    def _check_max_tokens(
-        self, engine: AbstractEngine, checks: list[CheckResult]
-    ) -> None:
+    def _check_max_tokens(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
             response = engine.chat(
                 [
@@ -124,19 +134,23 @@ class ChatCompletionTest(AbstractValidationTest):
             checks.append(CheckResult(name="max_tokens_error", passed=False, detail=str(e)))
             return
 
-        checks.append(CheckResult(
-            name="max_tokens_finish_reason",
-            passed=response.get("finish_reason") == "length",
-            expected="length",
-            actual=response.get("finish_reason"),
-        ))
+        checks.append(
+            CheckResult(
+                name="max_tokens_finish_reason",
+                passed=response.get("finish_reason") == "length",
+                expected="length",
+                actual=response.get("finish_reason"),
+            )
+        )
 
         usage = response.get("usage")
         if usage is not None:
             completion_tokens = usage.get("completion_tokens", 0)
-            checks.append(CheckResult(
-                name="max_tokens_token_count",
-                passed=completion_tokens <= 6,
-                expected="<= 6",
-                actual=completion_tokens,
-            ))
+            checks.append(
+                CheckResult(
+                    name="max_tokens_token_count",
+                    passed=completion_tokens <= 6,
+                    expected="<= 6",
+                    actual=completion_tokens,
+                )
+            )

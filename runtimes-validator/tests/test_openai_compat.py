@@ -13,6 +13,7 @@ from runtimes_validator.engines.vllm import VllmEngine
 
 # --- Helpers ---
 
+
 def _fake_chat_response() -> MagicMock:
     """Return a mock requests.Response for /v1/chat/completions."""
     resp = MagicMock()
@@ -242,13 +243,15 @@ def test_chat_stream_sends_correct_payload(mock_post: MagicMock):
     engine = VllmEngine(EngineConfig(model_id="granite-3.3-8b"))
     tools = [{"type": "function", "function": {"name": "f"}}]
 
-    list(engine.chat_stream(
-        [{"role": "user", "content": "hi"}],
-        tools=tools,
-        tool_choice="required",
-        temperature=0.5,
-        max_tokens=128,
-    ))
+    list(
+        engine.chat_stream(
+            [{"role": "user", "content": "hi"}],
+            tools=tools,
+            tool_choice="required",
+            temperature=0.5,
+            max_tokens=128,
+        )
+    )
 
     payload = mock_post.call_args.kwargs["json"]
     assert payload["stream"] is True

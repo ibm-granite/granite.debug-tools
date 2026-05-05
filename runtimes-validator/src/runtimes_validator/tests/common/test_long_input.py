@@ -64,21 +64,25 @@ class LongInputTest(AbstractValidationTest):
             )
 
         content = response.get("content", "") or ""
-        checks.append(CheckResult(
-            name="long_input_has_content",
-            passed=bool(content),
-            expected="non-empty content",
-            actual=content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="long_input_has_content",
+                passed=bool(content),
+                expected="non-empty content",
+                actual=content[:200],
+            )
+        )
 
         lower = content.lower()
         found = [kw for kw in LONG_INPUT_KEYWORDS if kw in lower]
-        checks.append(CheckResult(
-            name="long_input_relevant_keyword",
-            passed=len(found) > 0,
-            expected=f"at least one of {LONG_INPUT_KEYWORDS}",
-            actual=f"found: {found}" if found else content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="long_input_relevant_keyword",
+                passed=len(found) > 0,
+                expected=f"at least one of {LONG_INPUT_KEYWORDS}",
+                actual=f"found: {found}" if found else content[:200],
+            )
+        )
 
         return TestResult(
             test_id=self.test_id(),

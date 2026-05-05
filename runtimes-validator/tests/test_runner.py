@@ -148,9 +148,7 @@ def test_runner_handles_test_exception():
             raise RuntimeError("boom")
 
     engine = MockEngine()
-    runner = ValidationRunner(
-        engine=engine, model="test-model", tests=[CrashingTest()]
-    )
+    runner = ValidationRunner(engine=engine, model="test-model", tests=[CrashingTest()])
     report = runner.run()
     assert not report.all_passed
     assert report.results[0].error == "boom"
@@ -202,9 +200,7 @@ def test_managed_mode_stops_even_on_test_failure():
 def test_external_unhealthy_produces_report():
     engine = MockEngine(config=EngineConfig(mode="external"), healthy=False)
     reporter = CollectingReporter()
-    runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest()], reporters=[reporter]
-    )
+    runner = ValidationRunner(engine=engine, model="m", tests=[PassingTest()], reporters=[reporter])
     report = runner.run()
     assert not report.all_passed
     assert report.lifecycle_error is not None
@@ -216,9 +212,7 @@ def test_external_unhealthy_produces_report():
 def test_managed_unhealthy_produces_report_and_stops():
     engine = MockEngine(config=EngineConfig(mode="managed"), healthy=False)
     reporter = CollectingReporter()
-    runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest()], reporters=[reporter]
-    )
+    runner = ValidationRunner(engine=engine, model="m", tests=[PassingTest()], reporters=[reporter])
     report = runner.run()
     assert not report.all_passed
     assert report.lifecycle_error is not None
@@ -234,9 +228,7 @@ def test_managed_start_failure_produces_report():
         start_error=RuntimeError("port in use"),
     )
     reporter = CollectingReporter()
-    runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest()], reporters=[reporter]
-    )
+    runner = ValidationRunner(engine=engine, model="m", tests=[PassingTest()], reporters=[reporter])
     report = runner.run()
     assert not report.all_passed
     assert report.lifecycle_error is not None
@@ -264,9 +256,7 @@ def test_managed_stop_failure_still_returns_report():
 
     engine = StopFailsEngine(config=EngineConfig(mode="managed"))
     reporter = CollectingReporter()
-    runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest()], reporters=[reporter]
-    )
+    runner = ValidationRunner(engine=engine, model="m", tests=[PassingTest()], reporters=[reporter])
     report = runner.run()
     assert not report.all_passed
     assert report.cleanup_error is not None
@@ -285,9 +275,7 @@ def test_get_info_failure_before_start_produces_report():
 
     engine = BrokenInfoEngine(config=EngineConfig(mode="managed"))
     reporter = CollectingReporter()
-    runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest()], reporters=[reporter]
-    )
+    runner = ValidationRunner(engine=engine, model="m", tests=[PassingTest()], reporters=[reporter])
     report = runner.run()
     assert not report.all_passed
     assert report.lifecycle_error is not None
@@ -375,7 +363,8 @@ def test_on_test_complete_called_per_test():
     engine = MockEngine()
     reporter = StreamCollectingReporter()
     runner = ValidationRunner(
-        engine=engine, model="test-model",
+        engine=engine,
+        model="test-model",
         tests=[PassingTest(), FailingTest()],
         reporters=[reporter],
     )
@@ -392,7 +381,8 @@ def test_bombing_reporter_does_not_abort_run():
     bomb = BombReporter()
     good = StreamCollectingReporter()
     runner = ValidationRunner(
-        engine=engine, model="m",
+        engine=engine,
+        model="m",
         tests=[PassingTest(), FailingTest()],
         reporters=[bomb, good],
     )
@@ -408,7 +398,10 @@ def test_on_run_start_called_on_lifecycle_failure():
     engine = MockEngine(config=EngineConfig(mode="external"), healthy=False)
     reporter = StreamCollectingReporter()
     runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest()], reporters=[reporter],
+        engine=engine,
+        model="m",
+        tests=[PassingTest()],
+        reporters=[reporter],
     )
     report = runner.run()
     assert report.lifecycle_error is not None
@@ -426,7 +419,10 @@ def test_on_run_start_called_on_managed_start_failure():
     )
     reporter = StreamCollectingReporter()
     runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest()], reporters=[reporter],
+        engine=engine,
+        model="m",
+        tests=[PassingTest()],
+        reporters=[reporter],
     )
     report = runner.run()
     assert report.lifecycle_error is not None
@@ -567,9 +563,7 @@ def test_runner_aborts_when_timeout_is_followed_by_success_in_same_test():
 
 def test_runner_no_abort_without_timeout():
     engine = MockEngine()
-    runner = ValidationRunner(
-        engine=engine, model="m", tests=[PassingTest(), FailingTest()]
-    )
+    runner = ValidationRunner(engine=engine, model="m", tests=[PassingTest(), FailingTest()])
 
     report = runner.run()
 
@@ -622,12 +616,18 @@ def test_vllm_managed_tool_test_no_server_args_blocks():
 
 
 def test_vllm_managed_tool_test_with_both_flags_runs():
-    engine = MockVllmEngine(config=EngineConfig(
-        mode="managed",
-        extra={"server_args": [
-            "--enable-auto-tool-choice", "--tool-call-parser", "granite",
-        ]},
-    ))
+    engine = MockVllmEngine(
+        config=EngineConfig(
+            mode="managed",
+            extra={
+                "server_args": [
+                    "--enable-auto-tool-choice",
+                    "--tool-call-parser",
+                    "granite",
+                ]
+            },
+        )
+    )
     runner = ValidationRunner(engine=engine, model="m", tests=[FakeToolTest()])
     report = runner.run()
     assert report.lifecycle_error is None or "tool" not in report.lifecycle_error.lower()
@@ -635,10 +635,12 @@ def test_vllm_managed_tool_test_with_both_flags_runs():
 
 
 def test_vllm_managed_tool_test_missing_one_flag_blocks():
-    engine = MockVllmEngine(config=EngineConfig(
-        mode="managed",
-        extra={"server_args": ["--enable-auto-tool-choice"]},
-    ))
+    engine = MockVllmEngine(
+        config=EngineConfig(
+            mode="managed",
+            extra={"server_args": ["--enable-auto-tool-choice"]},
+        )
+    )
     runner = ValidationRunner(engine=engine, model="m", tests=[FakeToolTest()])
     report = runner.run()
     assert report.lifecycle_error is not None
