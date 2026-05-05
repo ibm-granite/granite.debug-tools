@@ -1,0 +1,55 @@
+name: CI - Runtimes Validator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtimes-validator/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "runtimes-validator/**"
+
+defaults:
+  run:
+    working-directory: runtimes-validator
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Mypy
+        run: uv run mypy src/
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --dev --python ${{ matrix.python-version }}
+
+      - name: Run tests
+        run: uv run pytest --cov=src/runtimes_validator --cov-report=term-missing
