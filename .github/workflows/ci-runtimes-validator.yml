@@ -10,6 +10,9 @@ on:
     paths:
       - "runtimes-validator/**"
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 defaults:
   run:
     working-directory: runtimes-validator
