@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from granite_validation.domain.models import EngineTimeoutError
-from granite_validation.engines.base import EngineConfig
-from granite_validation.engines.vllm import VllmEngine
+from runtimes_validator.domain.models import EngineTimeoutError
+from runtimes_validator.engines.base import EngineConfig
+from runtimes_validator.engines.vllm import VllmEngine
 
 
 # --- Helpers ---
@@ -77,13 +77,13 @@ def managed_start_env():
     """
     with (
         patch(
-            "granite_validation.engines.vllm.shutil.which",
+            "runtimes_validator.engines.vllm.shutil.which",
             return_value="/usr/bin/vllm",
         ),
-        patch("granite_validation.engines.vllm.subprocess.Popen") as mock_popen,
-        patch("granite_validation.engines.vllm.time.sleep"),
-        patch("granite_validation.engines.vllm.requests.get") as mock_vllm_get,
-        patch("granite_validation.engines.vllm.tempfile.TemporaryFile") as mock_tmp,
+        patch("runtimes_validator.engines.vllm.subprocess.Popen") as mock_popen,
+        patch("runtimes_validator.engines.vllm.time.sleep"),
+        patch("runtimes_validator.engines.vllm.requests.get") as mock_vllm_get,
+        patch("runtimes_validator.engines.vllm.tempfile.TemporaryFile") as mock_tmp,
     ):
         proc = _make_mock_process()
         mock_popen.return_value = proc
@@ -139,7 +139,7 @@ def test_vllm_get_info():
 # --- health_check() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_vllm_health_check_hits_health_endpoint(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = VllmEngine(EngineConfig(base_url="http://myhost:8000"))
@@ -150,14 +150,14 @@ def test_vllm_health_check_hits_health_endpoint(mock_get: MagicMock):
     assert url == "http://myhost:8000/health"
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_vllm_health_check_returns_true_on_200(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = VllmEngine(EngineConfig())
     assert engine.health_check() is True
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_vllm_health_check_returns_false_on_connection_error(mock_get: MagicMock):
     mock_get.side_effect = requests.ConnectionError("refused")
     engine = VllmEngine(EngineConfig())
@@ -167,7 +167,7 @@ def test_vllm_health_check_returns_false_on_connection_error(mock_get: MagicMock
 # --- chat() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_vllm_chat_posts_to_correct_url(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = VllmEngine(EngineConfig(base_url="http://gpu:8000", model_id="model"))
@@ -178,7 +178,7 @@ def test_vllm_chat_posts_to_correct_url(mock_post: MagicMock):
     assert url == "http://gpu:8000/v1/chat/completions"
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_timeout_passes_through_without_stderr(mock_post: MagicMock):
     """On timeout, EngineTimeoutError propagates cleanly without stderr."""
     mock_post.side_effect = requests.Timeout("Read timed out")
@@ -192,7 +192,7 @@ def test_chat_timeout_passes_through_without_stderr(mock_post: MagicMock):
     assert "vllm stderr" not in str(exc_info.value)
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_non_timeout_error_includes_stderr(mock_post: MagicMock):
     """Non-timeout errors (ConnectionError, etc.) still include vLLM stderr."""
     mock_post.side_effect = requests.ConnectionError("Connection refused")
@@ -205,7 +205,7 @@ def test_chat_non_timeout_error_includes_stderr(mock_post: MagicMock):
         engine.chat([{"role": "user", "content": "hi"}])
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_timeout_no_stderr_reraises(mock_post: MagicMock):
     """When stderr is empty, the original error is re-raised as-is."""
     mock_post.side_effect = requests.ConnectionError("Read timed out")
@@ -215,7 +215,7 @@ def test_chat_timeout_no_stderr_reraises(mock_post: MagicMock):
         engine.chat([{"role": "user", "content": "hi"}])
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_stream_non_timeout_error_includes_stderr(mock_post: MagicMock):
     """Streaming connection errors also include vLLM stderr."""
     mock_post.side_effect = requests.ConnectionError("Connection refused")
@@ -236,15 +236,15 @@ def test_start_rejects_external_mode():
         engine.start("ibm-granite/granite-3.3-8b-instruct")
 
 
-@patch("granite_validation.engines.vllm.shutil.which", return_value=None)
+@patch("runtimes_validator.engines.vllm.shutil.which", return_value=None)
 def test_start_binary_not_found(mock_which: MagicMock):
     engine = VllmEngine(EngineConfig(mode="managed"))
     with pytest.raises(RuntimeError, match="'vllm' binary not found"):
         engine.start("ibm-granite/granite-3.3-8b-instruct")
 
 
-@patch("granite_validation.engines.vllm.tempfile.TemporaryFile")
-@patch("granite_validation.engines.vllm.shutil.which", return_value=None)
+@patch("runtimes_validator.engines.vllm.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.vllm.shutil.which", return_value=None)
 def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMock):
     """When vllm_bin is set in extra, it is used directly without calling shutil.which."""
     config = EngineConfig(
@@ -253,7 +253,7 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
     )
     engine = VllmEngine(config)
 
-    with patch("granite_validation.engines.vllm.subprocess.Popen") as mock_popen:
+    with patch("runtimes_validator.engines.vllm.subprocess.Popen") as mock_popen:
         proc = _make_mock_process(poll_returns=1)
         mock_popen.return_value = proc
         mock_tmp.return_value = _make_stderr_file(b"bind error")
@@ -265,11 +265,11 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
         assert cmd[0] == "/custom/vllm"
 
 
-@patch("granite_validation.engines.vllm.tempfile.TemporaryFile")
-@patch("granite_validation.engines.vllm.time.sleep")
-@patch("granite_validation.engines.vllm.requests.get")
-@patch("granite_validation.engines.vllm.subprocess.Popen")
-@patch("granite_validation.engines.vllm.shutil.which", return_value="/usr/bin/vllm")
+@patch("runtimes_validator.engines.vllm.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.vllm.time.sleep")
+@patch("runtimes_validator.engines.vllm.requests.get")
+@patch("runtimes_validator.engines.vllm.subprocess.Popen")
+@patch("runtimes_validator.engines.vllm.shutil.which", return_value="/usr/bin/vllm")
 def test_start_process_exits_immediately(
     mock_which, mock_popen, mock_get, mock_sleep, mock_tmp
 ):
@@ -283,12 +283,12 @@ def test_start_process_exits_immediately(
     assert "CUDA out of memory" in str(exc_info.value)
 
 
-@patch("granite_validation.engines.vllm.tempfile.TemporaryFile")
-@patch("granite_validation.engines.vllm.time.sleep")
-@patch("granite_validation.engines.vllm.time.monotonic")
-@patch("granite_validation.engines.vllm.requests.get")
-@patch("granite_validation.engines.vllm.subprocess.Popen")
-@patch("granite_validation.engines.vllm.shutil.which", return_value="/usr/bin/vllm")
+@patch("runtimes_validator.engines.vllm.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.vllm.time.sleep")
+@patch("runtimes_validator.engines.vllm.time.monotonic")
+@patch("runtimes_validator.engines.vllm.requests.get")
+@patch("runtimes_validator.engines.vllm.subprocess.Popen")
+@patch("runtimes_validator.engines.vllm.shutil.which", return_value="/usr/bin/vllm")
 def test_start_health_timeout(
     mock_which, mock_popen, mock_get, mock_monotonic, mock_sleep, mock_tmp
 ):
@@ -440,7 +440,7 @@ def test_get_info_returns_version_after_start():
 # --- _fetch_version failure ---
 
 
-@patch("granite_validation.engines.vllm.requests.get")
+@patch("runtimes_validator.engines.vllm.requests.get")
 def test_fetch_version_handles_failure(mock_get: MagicMock):
     mock_get.side_effect = requests.ConnectionError("refused")
     engine = VllmEngine(EngineConfig())
@@ -450,7 +450,7 @@ def test_fetch_version_handles_failure(mock_get: MagicMock):
     assert engine._vllm_version is None
 
 
-@patch("granite_validation.engines.vllm.requests.get")
+@patch("runtimes_validator.engines.vllm.requests.get")
 def test_fetch_version_handles_non_200(mock_get: MagicMock):
     resp = MagicMock()
     resp.status_code = 503
@@ -596,7 +596,7 @@ def test_start_overwrites_model_id(managed_start_env):
     assert engine._config.model_id == "new-model"
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_includes_model_after_managed_start(mock_post: MagicMock, managed_start_env):
     """After start(), chat() sends the started model in the request payload."""
     mock_post.return_value = _fake_chat_response()
@@ -631,11 +631,11 @@ def test_start_custom_base_url_unchanged(managed_start_env):
 # --- Fix: startup_timeout is a real upper bound ---
 
 
-@patch("granite_validation.engines.vllm.tempfile.TemporaryFile")
-@patch("granite_validation.engines.vllm.time.sleep")
-@patch("granite_validation.engines.vllm.requests.get")
-@patch("granite_validation.engines.vllm.subprocess.Popen")
-@patch("granite_validation.engines.vllm.shutil.which", return_value="/usr/bin/vllm")
+@patch("runtimes_validator.engines.vllm.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.vllm.time.sleep")
+@patch("runtimes_validator.engines.vllm.requests.get")
+@patch("runtimes_validator.engines.vllm.subprocess.Popen")
+@patch("runtimes_validator.engines.vllm.shutil.which", return_value="/usr/bin/vllm")
 def test_health_probe_timeout_capped_to_remaining(
     mock_which, mock_popen, mock_get, mock_sleep, mock_tmp
 ):

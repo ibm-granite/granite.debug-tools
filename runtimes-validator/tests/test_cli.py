@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from granite_validation.cli import main
+from runtimes_validator.cli import main
 
 
 def test_list_engines(capsys):
@@ -40,8 +40,8 @@ def test_missing_model_errors(capsys):
 
 def test_extra_merges_into_engine_config():
     """--extra JSON is merged into EngineConfig.extra."""
-    with patch("granite_validation.cli.create_engine") as mock_create, \
-         patch("granite_validation.cli.ValidationRunner") as mock_runner:
+    with patch("runtimes_validator.cli.create_engine") as mock_create, \
+         patch("runtimes_validator.cli.ValidationRunner") as mock_runner:
         mock_runner.return_value.run.return_value.all_passed = True
         main([
             "--engine", "ollama",
@@ -73,8 +73,8 @@ def test_extra_non_object_errors():
 
 def test_extra_headers_take_precedence():
     """--header values override any 'headers' key in --extra."""
-    with patch("granite_validation.cli.create_engine") as mock_create, \
-         patch("granite_validation.cli.ValidationRunner") as mock_runner:
+    with patch("runtimes_validator.cli.create_engine") as mock_create, \
+         patch("runtimes_validator.cli.ValidationRunner") as mock_runner:
         mock_runner.return_value.run.return_value.all_passed = True
         main([
             "--engine", "ollama",

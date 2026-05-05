@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from granite_validation.engines.base import EngineConfig
-from granite_validation.engines.llamacpp import LlamaCppEngine
+from runtimes_validator.engines.base import EngineConfig
+from runtimes_validator.engines.llamacpp import LlamaCppEngine
 
 
 # --- Helpers ---
@@ -82,14 +82,14 @@ def managed_start_env(tmp_path):
 
     with (
         patch(
-            "granite_validation.engines.llamacpp.shutil.which",
+            "runtimes_validator.engines.llamacpp.shutil.which",
             return_value="/usr/bin/llama-server",
         ),
-        patch("granite_validation.engines.llamacpp.subprocess.Popen") as mock_popen,
-        patch("granite_validation.engines.openai_compat.requests.get") as mock_compat_get,
-        patch("granite_validation.engines.llamacpp.time.sleep"),
-        patch("granite_validation.engines.llamacpp.requests.get") as mock_llamacpp_get,
-        patch("granite_validation.engines.llamacpp.tempfile.TemporaryFile") as mock_tmp,
+        patch("runtimes_validator.engines.llamacpp.subprocess.Popen") as mock_popen,
+        patch("runtimes_validator.engines.openai_compat.requests.get") as mock_compat_get,
+        patch("runtimes_validator.engines.llamacpp.time.sleep"),
+        patch("runtimes_validator.engines.llamacpp.requests.get") as mock_llamacpp_get,
+        patch("runtimes_validator.engines.llamacpp.tempfile.TemporaryFile") as mock_tmp,
     ):
         proc = _make_mock_process()
         mock_popen.return_value = proc
@@ -143,7 +143,7 @@ def test_llamacpp_get_info():
 # --- health_check() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_llamacpp_health_check_hits_health_endpoint(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = LlamaCppEngine(EngineConfig(base_url="http://myhost:8080"))
@@ -154,14 +154,14 @@ def test_llamacpp_health_check_hits_health_endpoint(mock_get: MagicMock):
     assert url == "http://myhost:8080/health"
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_llamacpp_health_check_returns_true_on_200(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = LlamaCppEngine(EngineConfig())
     assert engine.health_check() is True
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_llamacpp_health_check_returns_false_on_connection_error(mock_get: MagicMock):
     mock_get.side_effect = requests.ConnectionError("refused")
     engine = LlamaCppEngine(EngineConfig())
@@ -171,7 +171,7 @@ def test_llamacpp_health_check_returns_false_on_connection_error(mock_get: Magic
 # --- chat() ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_llamacpp_chat_posts_to_correct_url(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = LlamaCppEngine(EngineConfig(base_url="http://gpu:8080", model_id="model.gguf"))
@@ -191,7 +191,7 @@ def test_start_rejects_external_mode():
         engine.start("model.gguf")
 
 
-@patch("granite_validation.engines.llamacpp.shutil.which", return_value=None)
+@patch("runtimes_validator.engines.llamacpp.shutil.which", return_value=None)
 def test_start_binary_not_found(mock_which: MagicMock, tmp_path):
     model_file = tmp_path / "model.gguf"
     model_file.write_bytes(b"GGUF")
@@ -206,8 +206,8 @@ def test_start_model_file_not_found():
         engine.start("/nonexistent/model.gguf")
 
 
-@patch("granite_validation.engines.llamacpp.tempfile.TemporaryFile")
-@patch("granite_validation.engines.llamacpp.shutil.which", return_value=None)
+@patch("runtimes_validator.engines.llamacpp.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.llamacpp.shutil.which", return_value=None)
 def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMock, tmp_path):
     """When llamacpp_bin is set in extra, it is used directly without calling shutil.which."""
     model_file = tmp_path / "model.gguf"
@@ -218,7 +218,7 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
     )
     engine = LlamaCppEngine(config)
 
-    with patch("granite_validation.engines.llamacpp.subprocess.Popen") as mock_popen:
+    with patch("runtimes_validator.engines.llamacpp.subprocess.Popen") as mock_popen:
         proc = _make_mock_process(poll_returns=1)
         mock_popen.return_value = proc
         mock_tmp.return_value = _make_stderr_file(b"bind error")
@@ -230,12 +230,12 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
         assert cmd[0] == "/custom/llama-server"
 
 
-@patch("granite_validation.engines.llamacpp.tempfile.TemporaryFile")
-@patch("granite_validation.engines.llamacpp.time.sleep")
-@patch("granite_validation.engines.llamacpp.requests.get")
-@patch("granite_validation.engines.llamacpp.subprocess.Popen")
+@patch("runtimes_validator.engines.llamacpp.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.llamacpp.time.sleep")
+@patch("runtimes_validator.engines.llamacpp.requests.get")
+@patch("runtimes_validator.engines.llamacpp.subprocess.Popen")
 @patch(
-    "granite_validation.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server"
+    "runtimes_validator.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server"
 )
 def test_start_process_exits_immediately(
     mock_which, mock_popen, mock_get, mock_sleep, mock_tmp, tmp_path
@@ -253,13 +253,13 @@ def test_start_process_exits_immediately(
     assert "address already in use" in str(exc_info.value)
 
 
-@patch("granite_validation.engines.llamacpp.tempfile.TemporaryFile")
-@patch("granite_validation.engines.llamacpp.time.sleep")
-@patch("granite_validation.engines.llamacpp.time.monotonic")
-@patch("granite_validation.engines.openai_compat.requests.get")
-@patch("granite_validation.engines.llamacpp.subprocess.Popen")
+@patch("runtimes_validator.engines.llamacpp.tempfile.TemporaryFile")
+@patch("runtimes_validator.engines.llamacpp.time.sleep")
+@patch("runtimes_validator.engines.llamacpp.time.monotonic")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.llamacpp.subprocess.Popen")
 @patch(
-    "granite_validation.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server"
+    "runtimes_validator.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server"
 )
 def test_start_health_timeout(
     mock_which, mock_popen, mock_get, mock_monotonic, mock_sleep, mock_tmp, tmp_path
@@ -428,7 +428,7 @@ def test_get_info_returns_version_after_start():
 # --- _fetch_version ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_fetch_version_string_build_info(mock_get: MagicMock):
     resp = MagicMock()
     resp.status_code = 200
@@ -444,7 +444,7 @@ def test_fetch_version_string_build_info(mock_get: MagicMock):
     assert engine._server_version == "b8680"
 
 
-@patch("granite_validation.engines.llamacpp.requests.get")
+@patch("runtimes_validator.engines.llamacpp.requests.get")
 def test_fetch_version_handles_failure(mock_get: MagicMock):
     mock_get.side_effect = requests.ConnectionError("refused")
     engine = LlamaCppEngine(EngineConfig())

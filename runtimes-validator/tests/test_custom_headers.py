@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from granite_validation.engines.base import EngineConfig
-from granite_validation.engines.llamacpp import LlamaCppEngine
-from granite_validation.engines.ollama import OllamaEngine
-from granite_validation.engines.vllm import VllmEngine
+from runtimes_validator.engines.base import EngineConfig
+from runtimes_validator.engines.llamacpp import LlamaCppEngine
+from runtimes_validator.engines.ollama import OllamaEngine
+from runtimes_validator.engines.vllm import VllmEngine
 
 
 # --- Helpers ---
@@ -38,7 +38,7 @@ def _fake_health_ok() -> MagicMock:
 # --- chat() sends custom headers ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_sends_custom_headers(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     headers = {"RITS_API_KEY": "tok123", "X-Custom": "value"}
@@ -53,7 +53,7 @@ def test_chat_sends_custom_headers(mock_post: MagicMock):
 # --- health_check() sends custom headers ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_health_check_sends_custom_headers(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     headers = {"RITS_API_KEY": "tok123"}
@@ -65,7 +65,7 @@ def test_health_check_sends_custom_headers(mock_get: MagicMock):
     assert call_kwargs["headers"] == headers
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_ollama_health_check_sends_custom_headers(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     headers = {"RITS_API_KEY": "tok123"}
@@ -82,7 +82,7 @@ def test_ollama_health_check_sends_custom_headers(mock_get: MagicMock):
 # --- no headers when extra is empty (backward compat) ---
 
 
-@patch("granite_validation.engines.openai_compat.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_chat_no_headers_when_extra_empty(mock_post: MagicMock):
     mock_post.return_value = _fake_chat_response()
     engine = VllmEngine(EngineConfig(model_id="m"))
@@ -93,7 +93,7 @@ def test_chat_no_headers_when_extra_empty(mock_post: MagicMock):
     assert call_kwargs["headers"] is None
 
 
-@patch("granite_validation.engines.openai_compat.requests.get")
+@patch("runtimes_validator.engines.openai_compat.requests.get")
 def test_health_check_no_headers_when_extra_empty(mock_get: MagicMock):
     mock_get.return_value = _fake_health_ok()
     engine = LlamaCppEngine(EngineConfig())
