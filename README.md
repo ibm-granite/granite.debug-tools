@@ -12,6 +12,7 @@ These tools help identify, evaluate, and resolve issues across fine-tuning workf
 | ---------------- | -------------------- |
 | Design scaffolded tasks to diagnose which skill-level capability is missing | [**STaD**](./STaD/) |
 | Benchmark LLM serving endpoints and local inference with an MCP-based tool | [**perfbench**](./perfbench/) |
+| Validate model behavior across inference engines (vLLM, llama.cpp, Ollama) | [**runtimes-validator**](./runtimes-validator/) |
 
 ### STaD - Scaffolded Task Design
 
@@ -24,6 +25,12 @@ Use STaD when you need to design scaffolded tasks to diagnose which skill-level 
 [perfbench](./perfbench/) is an MCP server that manages LLM benchmark runs as asynchronous subprocesses, wrapping five benchmark runners (vLLM, AIPerf, GuideLLM, llama-bench, Ollama) behind a unified tool interface.
 
 Use perfbench when you need to benchmark LLM serving endpoints or local inference and want an agent-driven workflow via the Model Context Protocol.
+
+### runtimes-validator
+
+[runtimes-validator](./runtimes-validator/) is a unified validation framework for running model checks across inference engines (vLLM, llama.cpp, Ollama). It provides a CLI (`runtimes-validator`) to run automated validation tests against Granite models deployed on different backends, supporting both managed (framework starts/stops the engine) and external (connect to a running engine) execution modes.
+
+Use runtimes-validator when you need to validate that a Granite model behaves correctly across different inference engines.
 
 ## Coming Soon
 

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(.env*)",
+      "Read(**/.env*)",
+      "Read(**/credentials*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)"
+    ],
+    "allow": [
+      "Bash(uv run:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api repos/*/pulls:*)",
+      "Bash(gh api repos/*/issues:*)",
+      "Bash(GH_HOST=github.ibm.com gh issue view:*)",
+      "Bash(GH_HOST=github.ibm.com gh pr view:*)",
+      "Bash(GH_HOST=github.ibm.com gh api repos/*/pulls:*)",
+      "Bash(GH_HOST=github.ibm.com gh api repos/*/issues:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch:*)",
+      "Bash(git status)"
+    ]
+  }
+}
