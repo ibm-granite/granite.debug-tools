@@ -10,3 +10,4 @@ build/
 *.egg
 .coverage
 htmlcov/
+.claude/settings.local.json
