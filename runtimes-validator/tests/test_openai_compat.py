@@ -199,7 +199,7 @@ def test_health_check_hits_correct_url(mock_get: MagicMock):
 
     engine.health_check()
 
-    url = mock_get.call_args.args[0]
+    url = mock_get.call_args_list[0].args[0]
     assert url == "http://myhost:8080/health"
 
 
