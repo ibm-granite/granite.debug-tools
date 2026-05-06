@@ -16,9 +16,7 @@ class JsonReporter(AbstractReporter):
 
     def report(self, report: Report) -> None:
         self._output_dir.mkdir(parents=True, exist_ok=True)
-        filename = (
-            f"report_{report.engine_info.engine_id}_{report.model}_{report.timestamp}.json"
-        )
+        filename = f"report_{report.engine_info.engine_id}_{report.model}_{report.timestamp}.json"
         # Sanitize filename
         filename = filename.replace("/", "_").replace(":", "-").replace(" ", "_")
         path = self._output_dir / filename

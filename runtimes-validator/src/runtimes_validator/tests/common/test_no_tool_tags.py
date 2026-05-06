@@ -39,30 +39,38 @@ class NoToolTagsWithoutToolsTest(AbstractValidationTest):
             )
 
         content = response.get("content", "") or ""
-        checks.append(CheckResult(
-            name="no_tool_tags_has_content",
-            passed=bool(content),
-            expected="non-empty content",
-            actual=content[:200],
-        ))
-        checks.append(CheckResult(
-            name="no_tool_tags_no_open_tag",
-            passed="<tool_call>" not in content,
-            expected="no <tool_call> in output",
-            actual="found <tool_call>" if "<tool_call>" in content else "clean",
-        ))
-        checks.append(CheckResult(
-            name="no_tool_tags_no_close_tag",
-            passed="</tool_call>" not in content,
-            expected="no </tool_call> in output",
-            actual="found </tool_call>" if "</tool_call>" in content else "clean",
-        ))
-        checks.append(CheckResult(
-            name="no_tool_tags_finish_reason",
-            passed=response.get("finish_reason") != "tool_calls",
-            expected="not tool_calls",
-            actual=response.get("finish_reason"),
-        ))
+        checks.append(
+            CheckResult(
+                name="no_tool_tags_has_content",
+                passed=bool(content),
+                expected="non-empty content",
+                actual=content[:200],
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="no_tool_tags_no_open_tag",
+                passed="<tool_call>" not in content,
+                expected="no <tool_call> in output",
+                actual="found <tool_call>" if "<tool_call>" in content else "clean",
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="no_tool_tags_no_close_tag",
+                passed="</tool_call>" not in content,
+                expected="no </tool_call> in output",
+                actual="found </tool_call>" if "</tool_call>" in content else "clean",
+            )
+        )
+        checks.append(
+            CheckResult(
+                name="no_tool_tags_finish_reason",
+                passed=response.get("finish_reason") != "tool_calls",
+                expected="not tool_calls",
+                actual=response.get("finish_reason"),
+            )
+        )
 
         return TestResult(
             test_id=self.test_id(),

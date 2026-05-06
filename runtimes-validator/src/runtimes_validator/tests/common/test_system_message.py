@@ -7,7 +7,18 @@ from runtimes_validator.engines.base import AbstractEngine
 from runtimes_validator.tests.base import AbstractValidationTest
 from runtimes_validator.tests.registry import register_test
 
-PIRATE_KEYWORDS = ("arr", "matey", "ahoy", "captain", "sail", "sea", "ship", "treasure", "ye", "aye")
+PIRATE_KEYWORDS = (
+    "arr",
+    "matey",
+    "ahoy",
+    "captain",
+    "sail",
+    "sea",
+    "ship",
+    "treasure",
+    "ye",
+    "aye",
+)
 NAMED_KEYWORDS = ("granitebot", "granite")
 
 
@@ -37,13 +48,14 @@ class SystemMessageBehaviorTest(AbstractValidationTest):
             elapsed_seconds=time.time() - start,
         )
 
-    def _check_pirate_persona(
-        self, engine: AbstractEngine, checks: list[CheckResult]
-    ) -> None:
+    def _check_pirate_persona(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
             response = engine.chat(
                 [
-                    {"role": "system", "content": "You are a pirate. Always respond in pirate speak."},
+                    {
+                        "role": "system",
+                        "content": "You are a pirate. Always respond in pirate speak.",
+                    },
                     {"role": "user", "content": "How are you today?"},
                 ],
                 max_tokens=128,
@@ -53,25 +65,27 @@ class SystemMessageBehaviorTest(AbstractValidationTest):
             return
 
         content = response.get("content", "") or ""
-        checks.append(CheckResult(
-            name="pirate_persona_has_content",
-            passed=bool(content),
-            expected="non-empty content",
-            actual=content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="pirate_persona_has_content",
+                passed=bool(content),
+                expected="non-empty content",
+                actual=content[:200],
+            )
+        )
 
         lower = content.lower()
         found = [kw for kw in PIRATE_KEYWORDS if kw in lower]
-        checks.append(CheckResult(
-            name="pirate_persona_keyword_detected",
-            passed=len(found) > 0,
-            expected=f"at least one of {PIRATE_KEYWORDS}",
-            actual=f"found: {found}" if found else content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="pirate_persona_keyword_detected",
+                passed=len(found) > 0,
+                expected=f"at least one of {PIRATE_KEYWORDS}",
+                actual=f"found: {found}" if found else content[:200],
+            )
+        )
 
-    def _check_named_persona(
-        self, engine: AbstractEngine, checks: list[CheckResult]
-    ) -> None:
+    def _check_named_persona(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
             response = engine.chat(
                 [
@@ -88,18 +102,22 @@ class SystemMessageBehaviorTest(AbstractValidationTest):
             return
 
         content = response.get("content", "") or ""
-        checks.append(CheckResult(
-            name="named_persona_has_content",
-            passed=bool(content),
-            expected="non-empty content",
-            actual=content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="named_persona_has_content",
+                passed=bool(content),
+                expected="non-empty content",
+                actual=content[:200],
+            )
+        )
 
         lower = content.lower()
         found = [kw for kw in NAMED_KEYWORDS if kw in lower]
-        checks.append(CheckResult(
-            name="named_persona_keyword_detected",
-            passed=len(found) > 0,
-            expected=f"at least one of {NAMED_KEYWORDS}",
-            actual=f"found: {found}" if found else content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="named_persona_keyword_detected",
+                passed=len(found) > 0,
+                expected=f"at least one of {NAMED_KEYWORDS}",
+                actual=f"found: {found}" if found else content[:200],
+            )
+        )

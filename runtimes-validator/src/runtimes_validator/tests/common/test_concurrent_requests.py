@@ -38,9 +38,7 @@ class ConcurrentRequestTest(AbstractValidationTest):
         results: dict[str, dict[str, Any] | Exception] = {}
 
         with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = {
-                executor.submit(_do_chat, q): key for key, q in questions.items()
-            }
+            futures = {executor.submit(_do_chat, q): key for key, q in questions.items()}
             for future in as_completed(futures):
                 key = futures[future]
                 try:
@@ -52,42 +50,52 @@ class ConcurrentRequestTest(AbstractValidationTest):
         for key in ("q1", "q2"):
             result = results.get(key)
             if isinstance(result, Exception):
-                checks.append(CheckResult(
-                    name=f"concurrent_{key}_error",
-                    passed=False,
-                    detail=str(result),
-                ))
+                checks.append(
+                    CheckResult(
+                        name=f"concurrent_{key}_error",
+                        passed=False,
+                        detail=str(result),
+                    )
+                )
                 all_ok = False
                 continue
 
             if result is None:
-                checks.append(CheckResult(
-                    name=f"concurrent_{key}_error",
-                    passed=False,
-                    detail="No result returned",
-                ))
+                checks.append(
+                    CheckResult(
+                        name=f"concurrent_{key}_error",
+                        passed=False,
+                        detail="No result returned",
+                    )
+                )
                 all_ok = False
                 continue
 
-            checks.append(CheckResult(
-                name=f"concurrent_{key}_role",
-                passed=result.get("role") == "assistant",
-                expected="assistant",
-                actual=result.get("role"),
-            ))
-            checks.append(CheckResult(
-                name=f"concurrent_{key}_content_nonempty",
-                passed=bool(result.get("content")),
-                expected="non-empty content",
-                actual=(result.get("content") or "")[:200],
-            ))
+            checks.append(
+                CheckResult(
+                    name=f"concurrent_{key}_role",
+                    passed=result.get("role") == "assistant",
+                    expected="assistant",
+                    actual=result.get("role"),
+                )
+            )
+            checks.append(
+                CheckResult(
+                    name=f"concurrent_{key}_content_nonempty",
+                    passed=bool(result.get("content")),
+                    expected="non-empty content",
+                    actual=(result.get("content") or "")[:200],
+                )
+            )
 
-        checks.append(CheckResult(
-            name="concurrent_both_completed",
-            passed=all_ok,
-            expected="both requests succeed",
-            actual=f"{len([r for r in results.values() if not isinstance(r, Exception)])}/2",
-        ))
+        checks.append(
+            CheckResult(
+                name="concurrent_both_completed",
+                passed=all_ok,
+                expected="both requests succeed",
+                actual=f"{len([r for r in results.values() if not isinstance(r, Exception)])}/2",
+            )
+        )
 
         return TestResult(
             test_id=self.test_id(),

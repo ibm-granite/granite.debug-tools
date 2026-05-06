@@ -10,6 +10,7 @@ from runtimes_validator.engines.vllm import VllmEngine
 
 # --- Helpers ---
 
+
 def _fake_chat_response() -> MagicMock:
     resp = MagicMock()
     resp.status_code = 200

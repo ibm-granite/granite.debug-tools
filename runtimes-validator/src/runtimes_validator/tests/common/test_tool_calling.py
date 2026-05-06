@@ -55,9 +55,7 @@ class ToolCallingTest(AbstractValidationTest):
             elapsed_seconds=time.time() - start,
         )
 
-    def _check_required(
-        self, engine: AbstractEngine, checks: list[CheckResult]
-    ) -> None:
+    def _check_required(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
             response = engine.chat(
                 [
@@ -74,37 +72,41 @@ class ToolCallingTest(AbstractValidationTest):
 
         tool_calls = response.get("tool_calls")
         has_calls = bool(tool_calls) and len(tool_calls) >= 1
-        checks.append(CheckResult(
-            name="required_has_tool_calls",
-            passed=has_calls,
-            expected=">= 1 tool call",
-            actual=len(tool_calls) if tool_calls else 0,
-        ))
+        checks.append(
+            CheckResult(
+                name="required_has_tool_calls",
+                passed=has_calls,
+                expected=">= 1 tool call",
+                actual=len(tool_calls) if tool_calls else 0,
+            )
+        )
         if not has_calls:
             return
 
         tc = tool_calls[0]
         fn_name = tc.get("function", {}).get("name")
-        checks.append(CheckResult(
-            name="required_function_name",
-            passed=fn_name == "get_weather",
-            expected="get_weather",
-            actual=fn_name,
-        ))
+        checks.append(
+            CheckResult(
+                name="required_function_name",
+                passed=fn_name == "get_weather",
+                expected="get_weather",
+                actual=fn_name,
+            )
+        )
 
         args = tc.get("function", {}).get("arguments", "{}")
         if isinstance(args, str):
             args = json.loads(args)
-        checks.append(CheckResult(
-            name="required_has_location_arg",
-            passed="location" in args,
-            expected="'location' in arguments",
-            actual=str(args),
-        ))
+        checks.append(
+            CheckResult(
+                name="required_has_location_arg",
+                passed="location" in args,
+                expected="'location' in arguments",
+                actual=str(args),
+            )
+        )
 
-    def _check_auto(
-        self, engine: AbstractEngine, checks: list[CheckResult]
-    ) -> None:
+    def _check_auto(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
             response = engine.chat(
                 [
@@ -119,26 +121,28 @@ class ToolCallingTest(AbstractValidationTest):
             checks.append(CheckResult(name="auto_error", passed=False, detail=str(e)))
             return
 
-        checks.append(CheckResult(
-            name="auto_valid_response",
-            passed=response.get("finish_reason") in ("stop", "length", "tool_calls"),
-            expected="stop, length, or tool_calls",
-            actual=response.get("finish_reason"),
-        ))
+        checks.append(
+            CheckResult(
+                name="auto_valid_response",
+                passed=response.get("finish_reason") in ("stop", "length", "tool_calls"),
+                expected="stop, length, or tool_calls",
+                actual=response.get("finish_reason"),
+            )
+        )
 
         tool_calls = response.get("tool_calls")
         if tool_calls:
             fn_name = tool_calls[0].get("function", {}).get("name")
-            checks.append(CheckResult(
-                name="auto_tool_name_if_called",
-                passed=fn_name == "get_weather",
-                expected="get_weather",
-                actual=fn_name,
-            ))
+            checks.append(
+                CheckResult(
+                    name="auto_tool_name_if_called",
+                    passed=fn_name == "get_weather",
+                    expected="get_weather",
+                    actual=fn_name,
+                )
+            )
 
-    def _check_roundtrip(
-        self, engine: AbstractEngine, checks: list[CheckResult]
-    ) -> None:
+    def _check_roundtrip(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
             response = engine.chat(
                 [
@@ -173,16 +177,20 @@ class ToolCallingTest(AbstractValidationTest):
             checks.append(CheckResult(name="roundtrip_error", passed=False, detail=str(e)))
             return
 
-        checks.append(CheckResult(
-            name="roundtrip_role",
-            passed=response.get("role") == "assistant",
-            expected="assistant",
-            actual=response.get("role"),
-        ))
+        checks.append(
+            CheckResult(
+                name="roundtrip_role",
+                passed=response.get("role") == "assistant",
+                expected="assistant",
+                actual=response.get("role"),
+            )
+        )
         content = response.get("content") or ""
-        checks.append(CheckResult(
-            name="roundtrip_has_content",
-            passed=len(content) > 0,
-            expected="non-empty content after tool result",
-            actual=content[:200],
-        ))
+        checks.append(
+            CheckResult(
+                name="roundtrip_has_content",
+                passed=len(content) > 0,
+                expected="non-empty content after tool result",
+                actual=content[:200],
+            )
+        )

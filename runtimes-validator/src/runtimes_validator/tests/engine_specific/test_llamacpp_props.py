@@ -30,10 +30,14 @@ class PropsEndpointTest(AbstractValidationTest):
         try:
             body = engine.props()
         except Exception as e:
-            checks.append(CheckResult(
-                name="props_status_200", passed=False,
-                expected=200, actual=str(e),
-            ))
+            checks.append(
+                CheckResult(
+                    name="props_status_200",
+                    passed=False,
+                    expected=200,
+                    actual=str(e),
+                )
+            )
             return TestResult(
                 test_id=self.test_id(),
                 test_name=self.test_name(),
@@ -43,22 +47,24 @@ class PropsEndpointTest(AbstractValidationTest):
                 elapsed_seconds=time.time() - start,
             )
 
-        checks.append(CheckResult(
-            name="props_status_200",
-            passed=True,
-            expected=200,
-            actual=200,
-        ))
-
-        has_metadata = (
-            "chat_template" in body or "default_generation_settings" in body
+        checks.append(
+            CheckResult(
+                name="props_status_200",
+                passed=True,
+                expected=200,
+                actual=200,
+            )
         )
-        checks.append(CheckResult(
-            name="props_has_metadata",
-            passed=has_metadata,
-            expected="chat_template or default_generation_settings",
-            actual=str(list(body.keys()))[:200],
-        ))
+
+        has_metadata = "chat_template" in body or "default_generation_settings" in body
+        checks.append(
+            CheckResult(
+                name="props_has_metadata",
+                passed=has_metadata,
+                expected="chat_template or default_generation_settings",
+                actual=str(list(body.keys()))[:200],
+            )
+        )
 
         return TestResult(
             test_id=self.test_id(),

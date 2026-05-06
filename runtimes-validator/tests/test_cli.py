@@ -40,14 +40,21 @@ def test_missing_model_errors(capsys):
 
 def test_extra_merges_into_engine_config():
     """--extra JSON is merged into EngineConfig.extra."""
-    with patch("runtimes_validator.cli.create_engine") as mock_create, \
-         patch("runtimes_validator.cli.ValidationRunner") as mock_runner:
+    with (
+        patch("runtimes_validator.cli.create_engine") as mock_create,
+        patch("runtimes_validator.cli.ValidationRunner") as mock_runner,
+    ):
         mock_runner.return_value.run.return_value.all_passed = True
-        main([
-            "--engine", "ollama",
-            "--model", "test-model",
-            "--extra", '{"vllm_bin": "/usr/local/bin/vllm", "server_args": ["--device", "cpu"]}',
-        ])
+        main(
+            [
+                "--engine",
+                "ollama",
+                "--model",
+                "test-model",
+                "--extra",
+                '{"vllm_bin": "/usr/local/bin/vllm", "server_args": ["--device", "cpu"]}',
+            ]
+        )
         config = mock_create.call_args[0][1]
         assert config.extra["vllm_bin"] == "/usr/local/bin/vllm"
         assert config.extra["server_args"] == ["--device", "cpu"]
@@ -73,15 +80,23 @@ def test_extra_non_object_errors():
 
 def test_extra_headers_take_precedence():
     """--header values override any 'headers' key in --extra."""
-    with patch("runtimes_validator.cli.create_engine") as mock_create, \
-         patch("runtimes_validator.cli.ValidationRunner") as mock_runner:
+    with (
+        patch("runtimes_validator.cli.create_engine") as mock_create,
+        patch("runtimes_validator.cli.ValidationRunner") as mock_runner,
+    ):
         mock_runner.return_value.run.return_value.all_passed = True
-        main([
-            "--engine", "ollama",
-            "--model", "m",
-            "--extra", '{"headers": {"X-Old": "old"}}',
-            "--header", "X-New: new",
-        ])
+        main(
+            [
+                "--engine",
+                "ollama",
+                "--model",
+                "m",
+                "--extra",
+                '{"headers": {"X-Old": "old"}}',
+                "--header",
+                "X-New: new",
+            ]
+        )
         config = mock_create.call_args[0][1]
         # --header overwrites the "headers" key from --extra
         assert config.extra["headers"] == {"X-New": "new"}

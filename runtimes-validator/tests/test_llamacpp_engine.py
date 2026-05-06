@@ -234,9 +234,7 @@ def test_start_uses_custom_binary_path(mock_which: MagicMock, mock_tmp: MagicMoc
 @patch("runtimes_validator.engines.llamacpp.time.sleep")
 @patch("runtimes_validator.engines.llamacpp.requests.get")
 @patch("runtimes_validator.engines.llamacpp.subprocess.Popen")
-@patch(
-    "runtimes_validator.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server"
-)
+@patch("runtimes_validator.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server")
 def test_start_process_exits_immediately(
     mock_which, mock_popen, mock_get, mock_sleep, mock_tmp, tmp_path
 ):
@@ -258,9 +256,7 @@ def test_start_process_exits_immediately(
 @patch("runtimes_validator.engines.llamacpp.time.monotonic")
 @patch("runtimes_validator.engines.openai_compat.requests.get")
 @patch("runtimes_validator.engines.llamacpp.subprocess.Popen")
-@patch(
-    "runtimes_validator.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server"
-)
+@patch("runtimes_validator.engines.llamacpp.shutil.which", return_value="/usr/bin/llama-server")
 def test_start_health_timeout(
     mock_which, mock_popen, mock_get, mock_monotonic, mock_sleep, mock_tmp, tmp_path
 ):
@@ -462,9 +458,12 @@ def test_build_cmd_default():
     cmd = engine._build_cmd("/usr/bin/llama-server", "/path/to/model.gguf")
     assert cmd == [
         "/usr/bin/llama-server",
-        "--model", "/path/to/model.gguf",
-        "--host", "localhost",
-        "--port", "8080",
+        "--model",
+        "/path/to/model.gguf",
+        "--host",
+        "localhost",
+        "--port",
+        "8080",
     ]
 
 
@@ -533,9 +532,7 @@ def test_read_stderr_truncates_to_last_4096_bytes():
 
 def test_start_custom_base_url(managed_start_env):
     env = managed_start_env
-    engine = LlamaCppEngine(
-        EngineConfig(mode="managed", base_url="http://192.168.1.50:9999")
-    )
+    engine = LlamaCppEngine(EngineConfig(mode="managed", base_url="http://192.168.1.50:9999"))
     engine.start(env["model_path"])
 
     cmd = env["popen"].call_args.args[0]

@@ -47,9 +47,7 @@ class ConsoleReporter(AbstractReporter):
         out.flush()
 
     @staticmethod
-    def _write_check_details(
-        out: TextIO, result: TestResult, *, show_passing: bool = True
-    ) -> None:
+    def _write_check_details(out: TextIO, result: TestResult, *, show_passing: bool = True) -> None:
         for check in result.checks:
             if check.passed and not show_passing:
                 continue
@@ -78,9 +76,7 @@ class ConsoleReporter(AbstractReporter):
                     f" ({passed_checks}/{total_checks})"
                     f" ({result.elapsed_seconds:.2f}s)\n"
                 )
-                self._write_check_details(
-                    out, result, show_passing=False
-                )
+                self._write_check_details(out, result, show_passing=False)
 
         if report.lifecycle_error:
             out.write(f"  LIFECYCLE ERROR: {report.lifecycle_error}\n")
