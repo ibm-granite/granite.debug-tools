@@ -23,7 +23,7 @@ class MultiTurnTest(AbstractValidationTest):
         start = time.time()
 
         try:
-            with self._check_scope(engine, "multi_turn"):
+            with self._check_scope(engine, checks, "multi_turn"):
                 response = engine.chat(
                     [
                         {"role": "system", "content": "You are a helpful assistant. Be brief."},

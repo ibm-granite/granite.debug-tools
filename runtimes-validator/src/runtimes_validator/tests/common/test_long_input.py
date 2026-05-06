@@ -48,7 +48,7 @@ class LongInputTest(AbstractValidationTest):
         prompt = WAR_AND_PEACE_PASSAGE + " What country is this passage primarily discussing?"
 
         try:
-            with self._check_scope(engine, "long_input"):
+            with self._check_scope(engine, checks, "long_input"):
                 response = engine.chat(
                     [{"role": "user", "content": prompt}],
                     max_tokens=256,

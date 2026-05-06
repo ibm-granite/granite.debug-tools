@@ -49,7 +49,7 @@ class OllamaContextWindowTest(AbstractValidationTest):
     ) -> None:
         prompt = WAR_AND_PEACE_PASSAGE + " What country is this passage primarily discussing?"
         try:
-            with self._check_scope(engine, "long_input_num_ctx"):
+            with self._check_scope(engine, checks, "long_input_num_ctx"):
                 body = engine.native_chat(
                     [{"role": "user", "content": prompt}],
                     model=model,
@@ -95,7 +95,7 @@ class OllamaContextWindowTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            with self._check_scope(engine, "context_exhaustion"):
+            with self._check_scope(engine, checks, "context_exhaustion"):
                 body = engine.native_chat(
                     [
                         {
@@ -145,7 +145,7 @@ class OllamaContextWindowTest(AbstractValidationTest):
     ) -> None:
         # First generate call
         try:
-            with self._check_scope(engine, "context_continuation_first"):
+            with self._check_scope(engine, checks, "context_continuation_first"):
                 body1 = engine.generate(
                     "The capital of France is",
                     model=model,
@@ -187,7 +187,7 @@ class OllamaContextWindowTest(AbstractValidationTest):
 
         # Second generate call reusing context
         try:
-            with self._check_scope(engine, "context_continuation_second"):
+            with self._check_scope(engine, checks, "context_continuation_second"):
                 body2 = engine.generate(
                     "And what is the capital of Germany?",
                     model=model,

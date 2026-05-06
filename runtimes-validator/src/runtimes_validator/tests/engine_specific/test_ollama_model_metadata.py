@@ -134,7 +134,7 @@ class OllamaModelMetadataTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            with self._check_scope(engine, "model_loads"):
+            with self._check_scope(engine, checks, "model_loads"):
                 body = engine.generate("", model=model)
         except Exception as e:
             checks.append(

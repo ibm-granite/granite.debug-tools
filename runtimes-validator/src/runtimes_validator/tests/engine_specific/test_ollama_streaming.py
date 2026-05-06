@@ -71,7 +71,7 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            with self._check_scope(engine, "generate_streaming"):
+            with self._check_scope(engine, checks, "generate_streaming"):
                 chunks = list(
                     engine.generate_stream(
                         "Why is the sky blue? Be brief but factual.",
@@ -127,7 +127,7 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            with self._check_scope(engine, "chat_streaming"):
+            with self._check_scope(engine, checks, "chat_streaming"):
                 chunks = list(
                     engine.native_chat_stream(
                         [{"role": "user", "content": "Say hello and be brief."}],
@@ -171,7 +171,7 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            with self._check_scope(engine, "tool_streaming"):
+            with self._check_scope(engine, checks, "tool_streaming"):
                 chunks = list(
                     engine.native_chat_stream(
                         [{"role": "user", "content": "Get the weather in London."}],
@@ -207,7 +207,7 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            with self._check_scope(engine, "streaming_no_leakage"):
+            with self._check_scope(engine, checks, "streaming_no_leakage"):
                 chunks = list(
                     engine.native_chat_stream(
                         [{"role": "user", "content": "Write a haiku about mountains."}],

@@ -60,7 +60,7 @@ class SpecialTokenLeakageTest(AbstractValidationTest):
 
     def _check_generate_leakage(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "generate_leakage"):
+            with self._check_scope(engine, checks, "generate_leakage"):
                 response = engine.chat(
                     [
                         {
@@ -96,7 +96,7 @@ class SpecialTokenLeakageTest(AbstractValidationTest):
 
     def _check_chat_leakage(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "chat_leakage"):
+            with self._check_scope(engine, checks, "chat_leakage"):
                 response = engine.chat(
                     [
                         {"role": "system", "content": "You are a helpful assistant. Be concise."},
@@ -130,7 +130,7 @@ class SpecialTokenLeakageTest(AbstractValidationTest):
 
     def _check_eos_stops(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "eos_stops"):
+            with self._check_scope(engine, checks, "eos_stops"):
                 response = engine.chat(
                     [{"role": "user", "content": "Say just the word 'hello' and nothing else."}],
                     max_tokens=500,

@@ -50,7 +50,7 @@ class SystemMessageBehaviorTest(AbstractValidationTest):
 
     def _check_pirate_persona(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "pirate_persona"):
+            with self._check_scope(engine, checks, "pirate_persona"):
                 response = engine.chat(
                     [
                         {
@@ -88,7 +88,7 @@ class SystemMessageBehaviorTest(AbstractValidationTest):
 
     def _check_named_persona(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "named_persona"):
+            with self._check_scope(engine, checks, "named_persona"):
                 response = engine.chat(
                     [
                         {

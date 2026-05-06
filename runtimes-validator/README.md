@@ -166,12 +166,26 @@ jq -c '.' /tmp/inspection.jsonl
 
 The output is **JSON Lines** (one JSON object per line) so it can be
 appended safely, `grep`ped, and parsed incrementally with `jq`. Each entry
-contains both the payload and the response for a single request, tagged with
-the currently running `test_id` and the endpoint `path`:
+contains both the payload and the response for a single request, with
+`test_id` as the first field and the endpoint `path`:
 
 ```json
-{"ts": "...", "test_id": "basic_generation", "streaming": false, "path": "/v1/chat/completions", "payload": {...}, "response": {...}}
+{"test_id": "chat_completion:basic_finish_reason", "ts": "...", "streaming": false, "path": "/v1/chat/completions", "payload": {...}, "response": {...}}
 ```
+
+`test_id` is formatted as `"{test_id}:{check_name}"` — the name of the
+`CheckResult` that the exchange contributed to. Because a single request can
+produce several CheckResults (e.g. `basic_role`, `basic_content_nonempty`,
+`basic_finish_reason`), the same payload/response pair is emitted **once per
+CheckResult**, each tagged with a different `check_name` suffix. This makes it
+trivial to find the exact payload behind a failing check:
+
+```bash
+jq -c 'select(.test_id=="chat_completion:basic_finish_reason")' inspection.jsonl
+```
+
+Exchanges that occur outside any check scope (or in a scope that produced no
+CheckResults) carry the bare `test_id` with no suffix.
 
 For streaming requests, `response` is the list of accumulated chunks (SSE
 chunks for `/v1/chat/completions`, NDJSON chunks for Ollama's native streaming

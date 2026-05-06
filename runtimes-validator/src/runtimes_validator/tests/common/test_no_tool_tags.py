@@ -23,7 +23,7 @@ class NoToolTagsWithoutToolsTest(AbstractValidationTest):
         start = time.time()
 
         try:
-            with self._check_scope(engine, "no_tool_tags"):
+            with self._check_scope(engine, checks, "no_tool_tags"):
                 response = engine.chat(
                     [{"role": "user", "content": "What is 2 + 2? Just answer with the number."}],
                     max_tokens=64,

@@ -57,7 +57,7 @@ class ToolCallingTest(AbstractValidationTest):
 
     def _check_required(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "required"):
+            with self._check_scope(engine, checks, "required"):
                 response = engine.chat(
                     [
                         {"role": "system", "content": "You are a helpful assistant."},
@@ -109,7 +109,7 @@ class ToolCallingTest(AbstractValidationTest):
 
     def _check_auto(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "auto"):
+            with self._check_scope(engine, checks, "auto"):
                 response = engine.chat(
                     [
                         {"role": "system", "content": "You are a helpful assistant."},
@@ -146,7 +146,7 @@ class ToolCallingTest(AbstractValidationTest):
 
     def _check_roundtrip(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "roundtrip"):
+            with self._check_scope(engine, checks, "roundtrip"):
                 response = engine.chat(
                     [
                         {"role": "system", "content": "You are a helpful assistant."},

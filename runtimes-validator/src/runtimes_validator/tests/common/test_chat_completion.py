@@ -37,7 +37,7 @@ class ChatCompletionTest(AbstractValidationTest):
 
     def _check_basic(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "basic"):
+            with self._check_scope(engine, checks, "basic"):
                 response = engine.chat(
                     [
                         {"role": "system", "content": "You are a helpful assistant. Be brief."},
@@ -95,7 +95,7 @@ class ChatCompletionTest(AbstractValidationTest):
 
     def _check_no_system(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "no_system"):
+            with self._check_scope(engine, checks, "no_system"):
                 response = engine.chat(
                     [{"role": "user", "content": "Say hello."}],
                     max_tokens=32,
@@ -123,7 +123,7 @@ class ChatCompletionTest(AbstractValidationTest):
 
     def _check_max_tokens(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            with self._check_scope(engine, "max_tokens"):
+            with self._check_scope(engine, checks, "max_tokens"):
                 response = engine.chat(
                     [
                         {

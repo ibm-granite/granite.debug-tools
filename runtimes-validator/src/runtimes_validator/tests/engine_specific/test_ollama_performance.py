@@ -47,7 +47,7 @@ class OllamaPerformanceTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            with self._check_scope(engine, "throughput"):
+            with self._check_scope(engine, checks, "throughput"):
                 body = engine.generate(
                     "Write a detailed explanation of how computers work.",
                     model=model,
