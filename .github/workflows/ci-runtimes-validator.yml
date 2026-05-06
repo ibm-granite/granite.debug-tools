@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - "runtimes-validator/**"
+      - ".github/workflows/ci-runtimes-validator.yml"
   pull_request:
     branches: [main]
     paths:
       - "runtimes-validator/**"
+      - ".github/workflows/ci-runtimes-validator.yml"
 
 defaults:
   run:
