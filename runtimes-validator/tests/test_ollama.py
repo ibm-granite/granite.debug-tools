@@ -552,7 +552,7 @@ def test_resolve_model_falls_back_to_config():
 # --- generate() ---
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_generate_basic(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response(
         {
@@ -573,7 +573,7 @@ def test_generate_basic(mock_post: MagicMock):
     assert payload["stream"] is False
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_generate_with_all_options(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({"response": "ok"})
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -597,7 +597,7 @@ def test_generate_with_all_options(mock_post: MagicMock):
     assert mock_post.call_args.kwargs["timeout"] == 300
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_generate_sends_headers(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({"response": ""})
     headers = {"X-Key": "val"}
@@ -611,7 +611,7 @@ def test_generate_sends_headers(mock_post: MagicMock):
 # --- generate_stream() ---
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_generate_stream_yields_chunks(mock_post: MagicMock):
     ndjson_lines = [
         '{"response":"Hello","done":false}',
@@ -629,7 +629,7 @@ def test_generate_stream_yields_chunks(mock_post: MagicMock):
     assert chunks[2]["done"] is True
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_generate_stream_sends_correct_payload(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response([])
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -651,7 +651,7 @@ def test_generate_stream_sends_correct_payload(mock_post: MagicMock):
     assert mock_post.call_args.kwargs["timeout"] == 200
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_generate_stream_skips_empty_lines(mock_post: MagicMock):
     ndjson_lines = [
         "",
@@ -669,7 +669,7 @@ def test_generate_stream_skips_empty_lines(mock_post: MagicMock):
 # --- native_chat() ---
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_native_chat_basic(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response(
         {
@@ -692,7 +692,7 @@ def test_native_chat_basic(mock_post: MagicMock):
     assert payload["stream"] is False
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_native_chat_with_tools_and_options(mock_post: MagicMock):
     mock_post.return_value = _fake_json_response({"message": {}, "done": True})
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -714,7 +714,7 @@ def test_native_chat_with_tools_and_options(mock_post: MagicMock):
 # --- native_chat_stream() ---
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_native_chat_stream_yields_chunks(mock_post: MagicMock):
     ndjson_lines = [
         '{"message":{"content":"Hi"},"done":false}',
@@ -734,7 +734,7 @@ def test_native_chat_stream_yields_chunks(mock_post: MagicMock):
     assert chunks[1]["done"] is True
 
 
-@patch("runtimes_validator.engines.ollama.requests.post")
+@patch("runtimes_validator.engines.openai_compat.requests.post")
 def test_native_chat_stream_sends_correct_payload(mock_post: MagicMock):
     mock_post.return_value = _fake_stream_response([])
     engine = OllamaEngine(EngineConfig(model_id="m"))
@@ -754,6 +754,157 @@ def test_native_chat_stream_sends_correct_payload(mock_post: MagicMock):
     assert payload["model"] == "override"
     assert payload["tools"] == tools
     assert payload["options"] == {"temperature": 0}
+
+
+# --- inspection logger integration for native endpoints ---
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_generate_forwards_exchange_to_inspection_logger(
+    mock_post: MagicMock,
+):
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    mock_post.return_value = _fake_json_response({"response": "Paris", "done": True})
+    logger = MagicMock(spec=InspectionLogger)
+    engine = OllamaEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    engine.generate("hi")
+
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    payload, response = args
+    assert payload["prompt"] == "hi"
+    assert payload["stream"] is False
+    assert response == {"response": "Paris", "done": True}
+    assert kwargs == {"streaming": False, "path": "/api/generate"}
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_generate_stream_forwards_payload_and_accumulated_chunks_to_logger(
+    mock_post: MagicMock,
+):
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    ndjson_lines = [
+        '{"response":"Hi","done":false}',
+        '{"response":"!","done":true}',
+    ]
+    mock_post.return_value = _fake_stream_response(ndjson_lines)
+    logger = MagicMock(spec=InspectionLogger)
+    engine = OllamaEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    chunks = list(engine.generate_stream("hi"))
+
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    payload, response = args
+    assert payload["stream"] is True
+    assert response == chunks
+    assert kwargs == {"streaming": True, "path": "/api/generate"}
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_native_chat_forwards_exchange_to_inspection_logger(
+    mock_post: MagicMock,
+):
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    mock_post.return_value = _fake_json_response(
+        {
+            "message": {"role": "assistant", "content": "Hi!"},
+            "done": True,
+        }
+    )
+    logger = MagicMock(spec=InspectionLogger)
+    engine = OllamaEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    engine.native_chat([{"role": "user", "content": "Hello"}])
+
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    _, response = args
+    assert response["message"]["content"] == "Hi!"
+    assert kwargs == {"streaming": False, "path": "/api/chat"}
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_native_chat_stream_forwards_payload_and_accumulated_chunks_to_logger(
+    mock_post: MagicMock,
+):
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    ndjson_lines = [
+        '{"message":{"content":"Hi"},"done":false}',
+        '{"message":{"content":"!"},"done":true}',
+    ]
+    mock_post.return_value = _fake_stream_response(ndjson_lines)
+    logger = MagicMock(spec=InspectionLogger)
+    engine = OllamaEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    chunks = list(engine.native_chat_stream([{"role": "user", "content": "hi"}]))
+
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    _, response = args
+    assert response == chunks
+    assert kwargs == {"streaming": True, "path": "/api/chat"}
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_generate_stream_logs_accumulated_chunks_on_mid_stream_timeout(
+    mock_post: MagicMock,
+):
+    """A Timeout mid-iteration still logs the exchange with accumulated chunks."""
+    from runtimes_validator.domain.models import EngineTimeoutError
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    resp = MagicMock()
+    resp.status_code = 200
+
+    def _raise_timeout_after_two(*, decode_unicode: bool):
+        yield '{"response":"a","done":false}'
+        yield '{"response":"b","done":false}'
+        raise requests.Timeout("Read timed out")
+
+    resp.iter_lines.side_effect = _raise_timeout_after_two
+    mock_post.return_value = resp
+
+    logger = MagicMock(spec=InspectionLogger)
+    engine = OllamaEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    with pytest.raises(EngineTimeoutError):
+        list(engine.generate_stream("hi"))
+
+    assert engine.timed_out_since_last_check() is True
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    _, response = args
+    assert kwargs == {"streaming": True, "path": "/api/generate"}
+    assert [c["response"] for c in response] == ["a", "b"]
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_generate_logs_null_response_on_initial_post_timeout(
+    mock_post: MagicMock,
+):
+    """An initial-POST timeout logs one exchange with response=None."""
+    from runtimes_validator.domain.models import EngineTimeoutError
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    mock_post.side_effect = requests.Timeout("Connection timed out")
+    logger = MagicMock(spec=InspectionLogger)
+    engine = OllamaEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    with pytest.raises(EngineTimeoutError):
+        engine.generate("hi")
+
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    payload, response = args
+    assert payload["prompt"] == "hi"
+    assert response is None
+    assert kwargs == {"streaming": False, "path": "/api/generate"}
 
 
 # --- show() ---

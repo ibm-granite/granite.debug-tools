@@ -143,6 +143,47 @@ uv run runtimes-validator \
   --base-url http://gpu-host:8000
 ```
 
+## Inspecting raw payloads and responses
+
+When a test fails, it is often useful to see exactly what was sent to the
+engine and what came back. One flag enables this:
+
+- `--inspect`: for every inference call (`/v1/chat/completions`, and Ollama's
+  native `/api/generate` and `/api/chat`, including their streaming variants),
+  record the JSON request payload and its response as a single JSONL line.
+- `--inspection-log PATH`: override the output path. Requires `--inspect`.
+  Default: `inspection_{engine}_{model}_{timestamp}.jsonl` in the current
+  directory.
+
+```bash
+uv run runtimes-validator \
+  --engine ollama --model granite3.3:8b \
+  --tests basic_generation \
+  --inspect --inspection-log /tmp/inspection.jsonl
+
+jq -c '.' /tmp/inspection.jsonl
+```
+
+The output is **JSON Lines** (one JSON object per line) so it can be
+appended safely, `grep`ped, and parsed incrementally with `jq`. Each entry
+contains both the payload and the response for a single request, tagged with
+the currently running `test_id` and the endpoint `path`:
+
+```json
+{"ts": "...", "test_id": "basic_generation", "streaming": false, "path": "/v1/chat/completions", "payload": {...}, "response": {...}}
+```
+
+For streaming requests, `response` is the list of accumulated chunks (SSE
+chunks for `/v1/chat/completions`, NDJSON chunks for Ollama's native streaming
+endpoints). If the request fails before any response is received (e.g. an
+initial-POST timeout), `response` is `null`. On a mid-stream timeout,
+`response` contains whatever chunks arrived before the timeout.
+
+Use `path` to filter by endpoint, e.g.
+`jq -c 'select(.path=="/api/generate")' inspection.jsonl`.
+
+No file is created when `--inspect` is not passed.
+
 ## Architecture
 
 ```

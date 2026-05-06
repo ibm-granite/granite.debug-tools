@@ -23,20 +23,21 @@ class MultiTurnTest(AbstractValidationTest):
         start = time.time()
 
         try:
-            response = engine.chat(
-                [
-                    {"role": "system", "content": "You are a helpful assistant. Be brief."},
-                    {"role": "user", "content": "My name is Alice and I live in Paris."},
-                    {
-                        "role": "assistant",
-                        "content": (
-                            "Hello Alice! Nice to know you're in Paris. How can I help you?"
-                        ),
-                    },
-                    {"role": "user", "content": "What is my name and where do I live?"},
-                ],
-                max_tokens=64,
-            )
+            with self._check_scope(engine, "multi_turn"):
+                response = engine.chat(
+                    [
+                        {"role": "system", "content": "You are a helpful assistant. Be brief."},
+                        {"role": "user", "content": "My name is Alice and I live in Paris."},
+                        {
+                            "role": "assistant",
+                            "content": (
+                                "Hello Alice! Nice to know you're in Paris. How can I help you?"
+                            ),
+                        },
+                        {"role": "user", "content": "What is my name and where do I live?"},
+                    ],
+                    max_tokens=64,
+                )
         except Exception as e:
             checks.append(CheckResult(name="context_error", passed=False, detail=str(e)))
             return TestResult(

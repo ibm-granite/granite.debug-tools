@@ -23,10 +23,11 @@ class NoToolTagsWithoutToolsTest(AbstractValidationTest):
         start = time.time()
 
         try:
-            response = engine.chat(
-                [{"role": "user", "content": "What is 2 + 2? Just answer with the number."}],
-                max_tokens=64,
-            )
+            with self._check_scope(engine, "no_tool_tags"):
+                response = engine.chat(
+                    [{"role": "user", "content": "What is 2 + 2? Just answer with the number."}],
+                    max_tokens=64,
+                )
         except Exception as e:
             checks.append(CheckResult(name="no_tool_tags_error", passed=False, detail=str(e)))
             return TestResult(

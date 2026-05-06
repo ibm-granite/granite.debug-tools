@@ -469,3 +469,59 @@ def test_chat_stream_raises_engine_timeout_error_on_iteration_timeout(mock_post:
         list(engine.chat_stream([{"role": "user", "content": "hi"}]))
 
     assert engine.timed_out_since_last_check() is True
+
+
+# --- inspection logger integration ---
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_chat_forwards_exchange_to_inspection_logger(mock_post: MagicMock):
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    mock_post.return_value = _fake_chat_response()
+    logger = MagicMock(spec=InspectionLogger)
+    engine = VllmEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    engine.chat([{"role": "user", "content": "hi"}])
+
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    payload, response = args
+    assert payload["messages"] == [{"role": "user", "content": "hi"}]
+    assert payload["model"] == "m"
+    assert response["choices"][0]["message"]["content"] == "Hello!"
+    assert kwargs == {"streaming": False, "path": "/v1/chat/completions"}
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_chat_stream_forwards_payload_and_accumulated_chunks(mock_post: MagicMock):
+    from runtimes_validator.reporting.inspection import InspectionLogger
+
+    sse_lines = [
+        'data: {"choices":[{"delta":{"content":"Hi"}}]}',
+        'data: {"choices":[{"delta":{"content":"!"},"finish_reason":"stop"}]}',
+        "data: [DONE]",
+    ]
+    mock_post.return_value = _fake_stream_response(sse_lines)
+    logger = MagicMock(spec=InspectionLogger)
+    engine = VllmEngine(EngineConfig(model_id="m", extra={"inspection_logger": logger}))
+
+    chunks = list(engine.chat_stream([{"role": "user", "content": "hi"}]))
+
+    assert logger.log_exchange.call_count == 1
+    args, kwargs = logger.log_exchange.call_args
+    payload, response = args
+    assert payload["stream"] is True
+    assert response == chunks
+    assert kwargs == {"streaming": True, "path": "/v1/chat/completions"}
+
+
+@patch("runtimes_validator.engines.openai_compat.requests.post")
+def test_chat_without_inspection_logger_does_not_fail(mock_post: MagicMock):
+    mock_post.return_value = _fake_chat_response()
+    engine = VllmEngine(EngineConfig(model_id="m"))
+
+    result = engine.chat([{"role": "user", "content": "hi"}])
+
+    assert result["content"] == "Hello!"
+    assert engine._inspection is None

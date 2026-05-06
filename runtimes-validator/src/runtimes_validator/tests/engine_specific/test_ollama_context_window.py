@@ -49,12 +49,13 @@ class OllamaContextWindowTest(AbstractValidationTest):
     ) -> None:
         prompt = WAR_AND_PEACE_PASSAGE + " What country is this passage primarily discussing?"
         try:
-            body = engine.native_chat(
-                [{"role": "user", "content": prompt}],
-                model=model,
-                options={"temperature": 0, "seed": 123, "num_ctx": 4096},
-                timeout=180,
-            )
+            with self._check_scope(engine, "long_input_num_ctx"):
+                body = engine.native_chat(
+                    [{"role": "user", "content": prompt}],
+                    model=model,
+                    options={"temperature": 0, "seed": 123, "num_ctx": 4096},
+                    timeout=180,
+                )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -94,17 +95,18 @@ class OllamaContextWindowTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            body = engine.native_chat(
-                [
-                    {
-                        "role": "user",
-                        "content": "Write me a long story with lots of emojis and characters",
-                    },
-                ],
-                model=model,
-                options={"temperature": 0, "seed": 123, "num_ctx": 128, "num_predict": 200},
-                timeout=120,
-            )
+            with self._check_scope(engine, "context_exhaustion"):
+                body = engine.native_chat(
+                    [
+                        {
+                            "role": "user",
+                            "content": "Write me a long story with lots of emojis and characters",
+                        },
+                    ],
+                    model=model,
+                    options={"temperature": 0, "seed": 123, "num_ctx": 128, "num_predict": 200},
+                    timeout=120,
+                )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -143,12 +145,13 @@ class OllamaContextWindowTest(AbstractValidationTest):
     ) -> None:
         # First generate call
         try:
-            body1 = engine.generate(
-                "The capital of France is",
-                model=model,
-                options={"temperature": 0, "seed": 42, "num_predict": 30},
-                timeout=120,
-            )
+            with self._check_scope(engine, "context_continuation_first"):
+                body1 = engine.generate(
+                    "The capital of France is",
+                    model=model,
+                    options={"temperature": 0, "seed": 42, "num_predict": 30},
+                    timeout=120,
+                )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -184,13 +187,14 @@ class OllamaContextWindowTest(AbstractValidationTest):
 
         # Second generate call reusing context
         try:
-            body2 = engine.generate(
-                "And what is the capital of Germany?",
-                model=model,
-                context=context,
-                options={"temperature": 0, "seed": 42, "num_predict": 30},
-                timeout=120,
-            )
+            with self._check_scope(engine, "context_continuation_second"):
+                body2 = engine.generate(
+                    "And what is the capital of Germany?",
+                    model=model,
+                    context=context,
+                    options={"temperature": 0, "seed": 42, "num_predict": 30},
+                    timeout=120,
+                )
         except Exception as e:
             checks.append(
                 CheckResult(

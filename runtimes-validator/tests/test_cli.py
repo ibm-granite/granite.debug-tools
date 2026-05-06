@@ -100,3 +100,100 @@ def test_extra_headers_take_precedence():
         config = mock_create.call_args[0][1]
         # --header overwrites the "headers" key from --extra
         assert config.extra["headers"] == {"X-New": "new"}
+
+
+# -- --inspection-log extension warning --------------------------------------
+
+
+def test_inspection_log_non_jsonl_extension_warns(tmp_path, capsys):
+    """Passing a non-.jsonl path prints a warning on stderr but still runs."""
+    log_path = tmp_path / "inspection.json"
+    with (
+        patch("runtimes_validator.cli.create_engine") as mock_create,
+        patch("runtimes_validator.cli.ValidationRunner") as mock_runner,
+    ):
+        mock_runner.return_value.run.return_value.all_passed = True
+        main(
+            [
+                "--engine",
+                "ollama",
+                "--model",
+                "m",
+                "--inspect",
+                "--inspection-log",
+                str(log_path),
+            ]
+        )
+
+    err = capsys.readouterr().err
+    assert "does not end in .jsonl" in err
+    assert str(log_path) in err
+    # logger was still created and wired up
+    assert "inspection_logger" in mock_create.call_args[0][1].extra
+
+
+def test_inspection_log_jsonl_extension_does_not_warn(tmp_path, capsys):
+    """Passing a .jsonl path prints no warning."""
+    log_path = tmp_path / "inspection.jsonl"
+    with (
+        patch("runtimes_validator.cli.create_engine"),
+        patch("runtimes_validator.cli.ValidationRunner") as mock_runner,
+    ):
+        mock_runner.return_value.run.return_value.all_passed = True
+        main(
+            [
+                "--engine",
+                "ollama",
+                "--model",
+                "m",
+                "--inspect",
+                "--inspection-log",
+                str(log_path),
+            ]
+        )
+
+    err = capsys.readouterr().err
+    assert "does not end in .jsonl" not in err
+
+
+def test_inspection_log_without_inspect_errors(tmp_path):
+    """--inspection-log requires --inspect."""
+    log_path = tmp_path / "inspection.jsonl"
+    try:
+        main(
+            [
+                "--engine",
+                "ollama",
+                "--model",
+                "m",
+                "--inspection-log",
+                str(log_path),
+            ]
+        )
+        assert False, "Should have exited"
+    except SystemExit as e:
+        assert e.code == 2
+
+
+def test_inspection_log_uppercase_jsonl_extension_does_not_warn(tmp_path, capsys):
+    """The extension check is case-insensitive."""
+    log_path = tmp_path / "inspection.JSONL"
+    with (
+        patch("runtimes_validator.cli.create_engine"),
+        patch("runtimes_validator.cli.ValidationRunner") as mock_runner,
+    ):
+        mock_runner.return_value.run.return_value.all_passed = True
+        main(
+            [
+                "--engine",
+                "ollama",
+                "--model",
+                "m",
+                "--inspect",
+                "--inspection-log",
+                str(log_path),
+            ]
+        )
+
+    err = capsys.readouterr().err
+    assert "does not end in .jsonl" not in err
