@@ -24,6 +24,27 @@ _DEFAULT_STARTUP_TIMEOUT = 120
 _DEFAULT_STOP_TIMEOUT = 10
 
 
+def _parse_audio_data_url(url: str) -> tuple[str, str]:
+    """Return ``(base64_data, format)`` parsed from a base64 audio data URL.
+
+    llama-server accepts only ``wav`` or ``mp3`` as the audio format.
+    """
+    if not url.startswith("data:audio/"):
+        raise ValueError(f"llamacpp requires base64 audio data URLs, got: {url[:40]}...")
+    header, _, data = url.partition(",")
+    if ";base64" not in header:
+        raise ValueError("llamacpp requires base64-encoded audio data URLs")
+    mime = header[len("data:") :].split(";", 1)[0]
+    subtype = mime.split("/", 1)[1].lower() if "/" in mime else ""
+    if subtype in ("wav", "x-wav", "wave"):
+        fmt = "wav"
+    elif subtype in ("mp3", "mpeg", "mpeg3"):
+        fmt = "mp3"
+    else:
+        raise ValueError(f"llamacpp only supports wav/mp3 audio, got: {subtype!r}")
+    return data, fmt
+
+
 @register_engine("llamacpp")
 class LlamaCppEngine(OpenAICompatibleEngine):
     """llama.cpp inference engine adapter.
@@ -52,6 +73,50 @@ class LlamaCppEngine(OpenAICompatibleEngine):
 
     def engine_id(self) -> str:
         return "llamacpp"
+
+    # -- Chat overrides ---------------------------------------------------
+
+    def chat(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | None = None,
+        temperature: float = 0.0,
+        max_tokens: int = 512,
+    ) -> dict[str, Any]:
+        return super().chat(
+            [self._rewrite_audio_parts(m) for m in messages],
+            tools=tools,
+            tool_choice=tool_choice,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+    @staticmethod
+    def _rewrite_audio_parts(message: dict[str, Any]) -> dict[str, Any]:
+        """Convert OpenAI-style ``audio_url`` parts into llama-server's
+        ``input_audio`` shape. Leaves every other part untouched."""
+        content = message.get("content")
+        if not isinstance(content, list):
+            return message
+
+        rewritten: list[dict[str, Any]] = []
+        changed = False
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "audio_url":
+                url = (part.get("audio_url") or {}).get("url", "")
+                data, fmt = _parse_audio_data_url(url)
+                rewritten.append(
+                    {"type": "input_audio", "input_audio": {"data": data, "format": fmt}}
+                )
+                changed = True
+            else:
+                rewritten.append(part)
+
+        if not changed:
+            return message
+        return {**message, "content": rewritten}
 
     # -- Lifecycle --------------------------------------------------------
 

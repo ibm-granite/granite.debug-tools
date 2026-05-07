@@ -57,6 +57,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated list of test IDs to run (default: all applicable)",
     )
     parser.add_argument(
+        "--modalities",
+        default="text",
+        help=(
+            "Comma-separated input modalities to validate: 'text', 'vision', 'speech' "
+            "(default: text). Ignored when --tests is used."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         default=None,
         help="Directory for JSON report output",
@@ -125,7 +133,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.list_tests:
         for test_id in list_tests():
-            print(test_id)
+            mods = ",".join(get_test_by_id(test_id)().modalities())
+            print(f"{test_id}\t[{mods}]")
         return 0
 
     if not args.engine:
@@ -185,7 +194,8 @@ def main(argv: list[str] | None = None) -> int:
         test_ids = [t.strip() for t in args.tests.split(",")]
         test_classes = [get_test_by_id(tid) for tid in test_ids]
     else:
-        test_classes = get_tests(engine_id=args.engine)
+        modality_set = {m.strip() for m in args.modalities.split(",") if m.strip()}
+        test_classes = get_tests(engine_id=args.engine, modalities=modality_set)
 
     tests = [cls() for cls in test_classes]
 

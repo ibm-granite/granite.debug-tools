@@ -48,3 +48,7 @@ class AbstractValidationTest(ABC):
         if begin is not None:
             begin(checks)
         yield
+    
+    def modalities(self) -> list[str]:
+        """Input modalities this test exercises (e.g. ``text``, ``vision``, ``speech``)."""
+        return ["text"]
