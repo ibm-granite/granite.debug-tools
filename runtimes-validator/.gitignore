@@ -12,3 +12,4 @@ build/
 htmlcov/
 weekly_matrix.local.toml
 results/
+.claude/settings.local.json
