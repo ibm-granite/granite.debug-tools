@@ -54,6 +54,12 @@ class OllamaEngine(OpenAICompatibleEngine):
     def engine_id(self) -> str:
         return "ollama"
 
+    def supported_modalities(self) -> set[str]:
+        # Ollama's OpenAI-compatible endpoint accepts image_url for
+        # vision-capable models (llava, granite-vision, llama3.2-vision).
+        # It does not accept audio input.
+        return {"text", "vision"}
+
     # -- Lifecycle --------------------------------------------------------
 
     def start(self, model: str) -> None:

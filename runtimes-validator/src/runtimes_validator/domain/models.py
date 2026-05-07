@@ -30,10 +30,20 @@ class TestResult:
     checks: list[CheckResult]
     elapsed_seconds: float
     error: str | None = None
+    skipped: bool = False
+    skip_reason: str | None = None
 
     @property
     def passed(self) -> bool:
+        if self.skipped:
+            return False
         return self.error is None and all(c.passed for c in self.checks)
+
+    @property
+    def status(self) -> str:
+        if self.skipped:
+            return "skip"
+        return "pass" if self.passed else "fail"
 
 
 @dataclass
@@ -66,5 +76,5 @@ class Report:
             self.lifecycle_error is None
             and self.cleanup_error is None
             and self.abort_reason is None
-            and all(r.passed for r in self.results)
+            and all(r.passed or r.skipped for r in self.results)
         )

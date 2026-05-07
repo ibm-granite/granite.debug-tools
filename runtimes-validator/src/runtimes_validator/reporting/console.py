@@ -30,6 +30,10 @@ class ConsoleReporter(AbstractReporter):
 
     def on_test_complete(self, result: TestResult) -> None:
         out = sys.stdout
+        if result.skipped:
+            out.write(f"  [SKIP] {result.test_name} — {result.skip_reason}\n")
+            out.flush()
+            return
         status = "PASS" if result.passed else "FAIL"
         if self._verbose:
             out.write(f"  [{status}] {result.test_name} ({result.elapsed_seconds:.2f}s)\n")
@@ -61,7 +65,8 @@ class ConsoleReporter(AbstractReporter):
     def report(self, report: Report) -> None:
         out = sys.stdout
         passed = sum(1 for r in report.results if r.passed)
-        failed = len(report.results) - passed
+        skipped = sum(1 for r in report.results if r.skipped)
+        failed = len(report.results) - passed - skipped
 
         if self._failed_results:
             out.write("\n")
@@ -90,6 +95,9 @@ class ConsoleReporter(AbstractReporter):
         out.write("-" * 60 + "\n")
         outcome = "FAIL" if report.lifecycle_error else ("PASS" if report.all_passed else "FAIL")
         out.write(f"  Result: {outcome}\n")
-        out.write(f"  Total: {len(report.results)} | Passed: {passed} | Failed: {failed}\n")
+        out.write(
+            f"  Total: {len(report.results)} | Passed: {passed}"
+            f" | Failed: {failed} | Skipped: {skipped}\n"
+        )
         out.write(f"  Elapsed: {report.total_elapsed_seconds:.2f}s\n")
         out.write("=" * 60 + "\n\n")

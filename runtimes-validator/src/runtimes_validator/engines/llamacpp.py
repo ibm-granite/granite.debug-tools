@@ -74,6 +74,9 @@ class LlamaCppEngine(OpenAICompatibleEngine):
     def engine_id(self) -> str:
         return "llamacpp"
 
+    def supported_modalities(self) -> set[str]:
+        return {"text", "vision", "speech"}
+
     # -- Chat overrides ---------------------------------------------------
 
     def chat(

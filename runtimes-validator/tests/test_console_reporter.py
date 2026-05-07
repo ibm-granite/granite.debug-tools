@@ -55,6 +55,19 @@ def _make_error_result() -> TestResult:
     )
 
 
+def _make_skipped_result() -> TestResult:
+    return TestResult(
+        test_id="skip_test",
+        test_name="Skipped Test",
+        engine_id="mock",
+        model="m",
+        checks=[],
+        elapsed_seconds=0.0,
+        skipped=True,
+        skip_reason="engine 'mock' does not support modality/modalities: speech",
+    )
+
+
 def _make_report(results: list[TestResult]) -> Report:
     return Report(
         engine_info=_make_engine_info(),
@@ -147,6 +160,41 @@ class TestDefaultMode:
         reporter.report(report)
         output = capsys.readouterr().out
         assert "Total: 2 | Passed: 1 | Failed: 1" in output
+
+    def test_skipped_test_shows_skip_line_with_reason(self, capsys):
+        reporter = ConsoleReporter()
+        result = _make_skipped_result()
+        reporter.on_test_complete(result)
+        output = capsys.readouterr().out
+        assert "[SKIP] Skipped Test" in output
+        assert "speech" in output
+
+    def test_skipped_test_not_listed_in_failed_section(self, capsys):
+        reporter = ConsoleReporter()
+        passing = _make_passing_result()
+        skipped = _make_skipped_result()
+        reporter.on_test_complete(passing)
+        reporter.on_test_complete(skipped)
+        capsys.readouterr()
+
+        report = _make_report([passing, skipped])
+        reporter.report(report)
+        output = capsys.readouterr().out
+        assert "Failed Tests" not in output
+        assert "Result: PASS" in output
+
+    def test_summary_counts_include_skipped(self, capsys):
+        reporter = ConsoleReporter()
+        passing = _make_passing_result()
+        skipped = _make_skipped_result()
+        reporter.on_test_complete(passing)
+        reporter.on_test_complete(skipped)
+        capsys.readouterr()
+
+        report = _make_report([passing, skipped])
+        reporter.report(report)
+        output = capsys.readouterr().out
+        assert "Total: 2 | Passed: 1 | Failed: 0 | Skipped: 1" in output
 
 
 class TestVerboseMode:

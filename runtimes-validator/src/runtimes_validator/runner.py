@@ -226,6 +226,27 @@ class ValidationRunner:
         for test in self._tests:
             self._reset_timeout_observation()
             self._set_inspection_test(test.test_id())
+
+            missing = set(test.modalities()) - self._engine.supported_modalities()
+            if missing:
+                reason = (
+                    f"engine '{self._engine.engine_id()}' does not support "
+                    f"modality/modalities: {', '.join(sorted(missing))}"
+                )
+                result = TestResult(
+                    test_id=test.test_id(),
+                    test_name=test.test_name(),
+                    engine_id=self._engine.engine_id(),
+                    model=self._model,
+                    checks=[],
+                    elapsed_seconds=0.0,
+                    skipped=True,
+                    skip_reason=reason,
+                )
+                results.append(result)
+                self._emit_test_complete(result)
+                continue
+
             try:
                 result = test.run(self._engine, self._model)
             except Exception as e:
