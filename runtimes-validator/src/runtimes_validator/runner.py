@@ -277,6 +277,11 @@ class ValidationRunner:
                 break
 
         total_elapsed = time.time() - start
+        if abort_reason is None:
+            if not results:
+                abort_reason = "No tests were selected."
+            elif all(r.skipped for r in results):
+                abort_reason = "No tests were executed; all selected tests were skipped."
 
         return self._build_report(
             info,

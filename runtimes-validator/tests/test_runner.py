@@ -717,6 +717,8 @@ def test_runner_skips_test_when_engine_missing_modality():
     runner = ValidationRunner(engine=engine, model="m", tests=[test])
     report = runner.run()
 
+    assert report.all_passed is False
+    assert report.abort_reason == "No tests were executed; all selected tests were skipped."
     assert len(report.results) == 1
     result = report.results[0]
     assert result.skipped is True
@@ -742,10 +744,21 @@ def test_runner_mixed_skipped_and_passed_tests_exits_clean():
     report = runner.run()
 
     assert report.all_passed is True
+    assert report.abort_reason is None
     assert len(report.results) == 2
     statuses = {r.test_id: r.status for r in report.results}
     assert statuses["passing"] == "pass"
     assert statuses["vision_test"] == "skip"
+
+
+def test_runner_no_tests_selected_fails_report():
+    engine = TextOnlyEngine()
+    runner = ValidationRunner(engine=engine, model="m", tests=[])
+    report = runner.run()
+
+    assert report.all_passed is False
+    assert report.results == []
+    assert report.abort_reason == "No tests were selected."
 
 
 def test_runner_skip_streams_to_reporter():

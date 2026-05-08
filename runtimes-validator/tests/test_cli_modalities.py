@@ -11,7 +11,7 @@ def _run_cli(extra_args):
         patch("runtimes_validator.cli.get_tests") as mock_get_tests,
     ):
         mock_runner.return_value.run.return_value.all_passed = True
-        mock_get_tests.return_value = []
+        mock_get_tests.return_value = [object]
         rc = main(args)
         return rc, mock_get_tests
 
@@ -32,6 +32,53 @@ def test_modalities_multiple_values():
     rc, mock_get_tests = _run_cli(["--modalities", "vision,speech"])
     assert rc == 0
     mock_get_tests.assert_called_once_with(engine_id="ollama", modalities={"vision", "speech"})
+
+
+def test_modalities_are_normalized_to_lowercase():
+    rc, mock_get_tests = _run_cli(["--modalities", "Text,VISION"])
+    assert rc == 0
+    mock_get_tests.assert_called_once_with(engine_id="ollama", modalities={"text", "vision"})
+
+
+def test_unknown_modality_errors():
+    with (
+        patch("runtimes_validator.cli.create_engine"),
+        patch("runtimes_validator.cli.ValidationRunner"),
+        patch("runtimes_validator.cli.get_tests"),
+    ):
+        try:
+            main(["--engine", "ollama", "--model", "m", "--modalities", "vison"])
+            assert False, "Should have exited"
+        except SystemExit as e:
+            assert e.code == 2
+
+
+def test_empty_modality_selection_errors():
+    with (
+        patch("runtimes_validator.cli.create_engine"),
+        patch("runtimes_validator.cli.ValidationRunner"),
+        patch("runtimes_validator.cli.get_tests"),
+    ):
+        try:
+            main(["--engine", "ollama", "--model", "m", "--modalities", ""])
+            assert False, "Should have exited"
+        except SystemExit as e:
+            assert e.code == 2
+
+
+def test_no_tests_selected_after_modality_filter_errors():
+    with (
+        patch("runtimes_validator.cli.create_engine"),
+        patch("runtimes_validator.cli.ValidationRunner") as mock_runner,
+        patch("runtimes_validator.cli.get_tests") as mock_get_tests,
+    ):
+        mock_get_tests.return_value = []
+        try:
+            main(["--engine", "ollama", "--model", "m", "--modalities", "vision"])
+            assert False, "Should have exited"
+        except SystemExit as e:
+            assert e.code == 2
+        mock_runner.assert_not_called()
 
 
 def test_modalities_ignored_when_tests_is_explicit():

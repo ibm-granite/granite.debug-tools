@@ -25,6 +25,8 @@ from runtimes_validator.tests.registry import (
     list_tests,
 )
 
+VALID_MODALITIES = {"text", "vision", "speech"}
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -121,6 +123,22 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _parse_modalities(raw: str, parser: argparse.ArgumentParser) -> set[str]:
+    modalities = {m.strip().lower() for m in raw.split(",") if m.strip()}
+    if not modalities:
+        parser.error("--modalities must include at least one modality")
+
+    unknown = modalities - VALID_MODALITIES
+    if unknown:
+        parser.error(
+            "Unknown modality/modalities: "
+            f"{', '.join(sorted(unknown))}. "
+            f"Valid values: {', '.join(sorted(VALID_MODALITIES))}"
+        )
+
+    return modalities
+
+
 def main(argv: list[str] | None = None) -> int:
     discover_tests()
     parser = build_parser()
@@ -194,8 +212,10 @@ def main(argv: list[str] | None = None) -> int:
         test_ids = [t.strip() for t in args.tests.split(",")]
         test_classes = [get_test_by_id(tid) for tid in test_ids]
     else:
-        modality_set = {m.strip() for m in args.modalities.split(",") if m.strip()}
+        modality_set = _parse_modalities(args.modalities, parser)
         test_classes = get_tests(engine_id=args.engine, modalities=modality_set)
+        if not test_classes:
+            parser.error("No tests selected. Check --engine, --modalities, or use --list-tests.")
 
     tests = [cls() for cls in test_classes]
 
