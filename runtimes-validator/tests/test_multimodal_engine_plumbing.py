@@ -5,28 +5,38 @@ from unittest.mock import MagicMock
 from runtimes_validator.tests.multimodal.test_speech_engine import SpeechEnginePlumbingTest
 from runtimes_validator.tests.multimodal.test_vision_engine import VisionEnginePlumbingTest
 
+_MISSING_USAGE = object()
 
-def _scripted_engine(mm_prompt_tokens: int | None, text_prompt_tokens: int = 10):
+
+def _usage(prompt_tokens):
+    if prompt_tokens is _MISSING_USAGE:
+        return None
+    return {"prompt_tokens": prompt_tokens}
+
+
+def _scripted_engine(
+    mm_prompt_tokens: int | None | object,
+    text_prompt_tokens: int | None | object = 10,
+):
     """Return a mock engine whose first chat() call returns the multimodal response
     and subsequent calls return a text-only baseline response.
     """
     engine = MagicMock()
     engine.engine_id.return_value = "mock"
 
-    mm_usage = None if mm_prompt_tokens is None else {"prompt_tokens": mm_prompt_tokens}
     mm_response = {
         "role": "assistant",
         "content": "ok",
         "tool_calls": None,
         "finish_reason": "stop",
-        "usage": mm_usage,
+        "usage": _usage(mm_prompt_tokens),
     }
     text_response = {
         "role": "assistant",
         "content": "ok",
         "tool_calls": None,
         "finish_reason": "stop",
-        "usage": {"prompt_tokens": text_prompt_tokens},
+        "usage": _usage(text_prompt_tokens),
     }
     engine.chat.side_effect = [mm_response, text_response]
     return engine
@@ -60,12 +70,39 @@ def test_vision_engine_fails_when_image_did_not_add_tokens():
 
 
 def test_vision_engine_fails_when_usage_missing():
-    engine = _scripted_engine(mm_prompt_tokens=None)
+    engine = _scripted_engine(mm_prompt_tokens=_MISSING_USAGE)
     result = VisionEnginePlumbingTest().run(engine, "test-model")
     assert not result.passed
     check = _check(result, "image_ingested_prompt_tokens")
     assert not check.passed
     assert "usage.prompt_tokens" in check.detail
+
+
+def test_vision_engine_fails_when_multimodal_prompt_tokens_is_none():
+    engine = _scripted_engine(mm_prompt_tokens=None)
+    result = VisionEnginePlumbingTest().run(engine, "test-model")
+    assert not result.passed
+    check = _check(result, "image_ingested_prompt_tokens")
+    assert not check.passed
+    assert "numeric usage.prompt_tokens" in check.detail
+
+
+def test_vision_engine_fails_when_text_baseline_usage_missing():
+    engine = _scripted_engine(mm_prompt_tokens=500, text_prompt_tokens=_MISSING_USAGE)
+    result = VisionEnginePlumbingTest().run(engine, "test-model")
+    assert not result.passed
+    check = _check(result, "image_ingested_prompt_tokens")
+    assert not check.passed
+    assert "text baseline" in check.detail
+
+
+def test_vision_engine_fails_when_text_baseline_prompt_tokens_is_none():
+    engine = _scripted_engine(mm_prompt_tokens=500, text_prompt_tokens=None)
+    result = VisionEnginePlumbingTest().run(engine, "test-model")
+    assert not result.passed
+    check = _check(result, "image_ingested_prompt_tokens")
+    assert not check.passed
+    assert "text baseline" in check.detail
 
 
 def test_vision_engine_captures_exception():
@@ -106,10 +143,19 @@ def test_speech_engine_fails_when_audio_did_not_add_tokens():
 
 
 def test_speech_engine_fails_when_usage_missing():
-    engine = _scripted_engine(mm_prompt_tokens=None)
+    engine = _scripted_engine(mm_prompt_tokens=_MISSING_USAGE)
     result = SpeechEnginePlumbingTest().run(engine, "test-model")
     assert not result.passed
     assert not _check(result, "audio_ingested_prompt_tokens").passed
+
+
+def test_speech_engine_fails_when_text_baseline_usage_missing():
+    engine = _scripted_engine(mm_prompt_tokens=1200, text_prompt_tokens=_MISSING_USAGE)
+    result = SpeechEnginePlumbingTest().run(engine, "test-model")
+    assert not result.passed
+    check = _check(result, "audio_ingested_prompt_tokens")
+    assert not check.passed
+    assert "text baseline" in check.detail
 
 
 def test_speech_engine_payload_shape():

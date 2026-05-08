@@ -37,6 +37,16 @@ def append_shape_checks(response: dict[str, Any], checks: list[CheckResult]) -> 
     )
 
 
+def _prompt_tokens(response: dict[str, Any]) -> int | None:
+    usage = response.get("usage")
+    if not isinstance(usage, dict):
+        return None
+    value = usage.get("prompt_tokens")
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    return value
+
+
 def append_ingestion_check(
     engine: AbstractEngine,
     mm_response: dict[str, Any],
@@ -50,15 +60,15 @@ def append_ingestion_check(
     check rather than silently passing — the framework cannot confirm that the
     media was ingested without a token count.
     """
-    mm_usage = mm_response.get("usage")
-    if mm_usage is None or mm_usage.get("prompt_tokens") is None:
+    mm_pt = _prompt_tokens(mm_response)
+    if mm_pt is None:
         checks.append(
             CheckResult(
                 name=f"{media_label}_ingested_prompt_tokens",
                 passed=False,
                 detail=(
-                    "engine did not report usage.prompt_tokens; "
-                    f"cannot verify {media_label} ingestion"
+                    "engine did not report numeric usage.prompt_tokens for "
+                    f"{media_label} request; cannot verify {media_label} ingestion"
                 ),
             )
         )
@@ -70,8 +80,20 @@ def append_ingestion_check(
         checks.append(CheckResult(name="text_baseline_error", passed=False, detail=str(e)))
         return
 
-    text_pt = (text_response.get("usage") or {}).get("prompt_tokens", 0)
-    mm_pt = mm_usage["prompt_tokens"]
+    text_pt = _prompt_tokens(text_response)
+    if text_pt is None:
+        checks.append(
+            CheckResult(
+                name=f"{media_label}_ingested_prompt_tokens",
+                passed=False,
+                detail=(
+                    "engine did not report numeric usage.prompt_tokens for text baseline; "
+                    f"cannot verify {media_label} ingestion"
+                ),
+            )
+        )
+        return
+
     checks.append(
         CheckResult(
             name=f"{media_label}_ingested_prompt_tokens",
