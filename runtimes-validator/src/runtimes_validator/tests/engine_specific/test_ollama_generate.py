@@ -49,12 +49,13 @@ class OllamaGenerateTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            body = engine.generate(
-                "What is your name?",
-                model=model,
-                system="You are a helpful assistant named GraniteBot.",
-                options={"temperature": 0, "num_predict": 100},
-            )
+            with self._check_scope(engine, checks, "system_prompt"):
+                body = engine.generate(
+                    "What is your name?",
+                    model=model,
+                    system="You are a helpful assistant named GraniteBot.",
+                    options={"temperature": 0, "num_predict": 100},
+                )
         except Exception as e:
             checks.append(CheckResult(name="system_prompt_error", passed=False, detail=str(e)))
             return
@@ -90,11 +91,12 @@ class OllamaGenerateTest(AbstractValidationTest):
         options = {"temperature": 0, "seed": 42, "num_predict": 50}
 
         try:
-            body1 = engine.generate(
-                "Count from 1 to 10.",
-                model=model,
-                options=options,
-            )
+            with self._check_scope(engine, checks, "reproducibility_run1"):
+                body1 = engine.generate(
+                    "Count from 1 to 10.",
+                    model=model,
+                    options=options,
+                )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -116,11 +118,12 @@ class OllamaGenerateTest(AbstractValidationTest):
         )
 
         try:
-            body2 = engine.generate(
-                "Count from 1 to 10.",
-                model=model,
-                options=options,
-            )
+            with self._check_scope(engine, checks, "reproducibility_run2"):
+                body2 = engine.generate(
+                    "Count from 1 to 10.",
+                    model=model,
+                    options=options,
+                )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -159,11 +162,12 @@ class OllamaGenerateTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            body = engine.generate(
-                "Tell me a joke.",
-                model=model,
-                options={"temperature": 0, "num_ctx": 128, "num_predict": 50},
-            )
+            with self._check_scope(engine, checks, "small_context"):
+                body = engine.generate(
+                    "Tell me a joke.",
+                    model=model,
+                    options={"temperature": 0, "num_ctx": 128, "num_predict": 50},
+                )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -191,11 +195,12 @@ class OllamaGenerateTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            body = engine.generate(
-                "Hello",
-                model=model,
-                options={"num_predict": 20},
-            )
+            with self._check_scope(engine, checks, "generate_metrics"):
+                body = engine.generate(
+                    "Hello",
+                    model=model,
+                    options={"num_predict": 20},
+                )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -238,11 +243,12 @@ class OllamaGenerateTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            body = engine.native_chat(
-                [{"role": "user", "content": "Say hello."}],
-                model=model,
-                options={"num_predict": 20},
-            )
+            with self._check_scope(engine, checks, "chat_metrics"):
+                body = engine.native_chat(
+                    [{"role": "user", "content": "Say hello."}],
+                    model=model,
+                    options={"num_predict": 20},
+                )
         except Exception as e:
             checks.append(
                 CheckResult(

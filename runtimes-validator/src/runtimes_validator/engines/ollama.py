@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-import json
 import logging
 import os
 import shutil
@@ -158,14 +157,7 @@ class OllamaEngine(OpenAICompatibleEngine):
         if keep_alive is not None:
             payload["keep_alive"] = keep_alive
 
-        resp = requests.post(
-            f"{self._base_url}/api/generate",
-            json=payload,
-            headers=self._headers or None,
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        return resp.json()
+        return self._post_json("/api/generate", payload, timeout=timeout)
 
     def generate_stream(
         self,
@@ -184,18 +176,7 @@ class OllamaEngine(OpenAICompatibleEngine):
         if options is not None:
             payload["options"] = options
 
-        resp = requests.post(
-            f"{self._base_url}/api/generate",
-            json=payload,
-            headers=self._headers or None,
-            timeout=timeout,
-            stream=True,
-        )
-        resp.raise_for_status()
-
-        for line in resp.iter_lines(decode_unicode=True):
-            if line:
-                yield json.loads(line)
+        yield from self._post_stream_ndjson("/api/generate", payload, timeout=timeout)
 
     def native_chat(
         self,
@@ -217,14 +198,7 @@ class OllamaEngine(OpenAICompatibleEngine):
         if options is not None:
             payload["options"] = options
 
-        resp = requests.post(
-            f"{self._base_url}/api/chat",
-            json=payload,
-            headers=self._headers or None,
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        return resp.json()
+        return self._post_json("/api/chat", payload, timeout=timeout)
 
     def native_chat_stream(
         self,
@@ -246,18 +220,7 @@ class OllamaEngine(OpenAICompatibleEngine):
         if options is not None:
             payload["options"] = options
 
-        resp = requests.post(
-            f"{self._base_url}/api/chat",
-            json=payload,
-            headers=self._headers or None,
-            timeout=timeout,
-            stream=True,
-        )
-        resp.raise_for_status()
-
-        for line in resp.iter_lines(decode_unicode=True):
-            if line:
-                yield json.loads(line)
+        yield from self._post_stream_ndjson("/api/chat", payload, timeout=timeout)
 
     def show(
         self,

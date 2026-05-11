@@ -225,6 +225,7 @@ class ValidationRunner:
 
         for test in self._tests:
             self._reset_timeout_observation()
+            self._set_inspection_test(test.test_id())
             try:
                 result = test.run(self._engine, self._model)
             except Exception as e:
@@ -237,6 +238,8 @@ class ValidationRunner:
                     elapsed_seconds=0.0,
                     error=str(e),
                 )
+            finally:
+                self._set_inspection_test(None)
             results.append(result)
             self._emit_test_complete(result)
 
@@ -265,6 +268,14 @@ class ValidationRunner:
         reset = getattr(self._engine, "reset_timeout_observed", None)
         if callable(reset):
             reset()
+
+    def _set_inspection_test(self, test_id: str | None) -> None:
+        inspection = getattr(self._engine, "_inspection", None)
+        if inspection is None:
+            return
+        setter = getattr(inspection, "set_current_test", None)
+        if callable(setter):
+            setter(test_id)
 
     def _engine_timed_out(self) -> bool:
         checker = getattr(self._engine, "timed_out_since_last_check", None)

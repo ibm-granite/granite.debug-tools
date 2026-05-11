@@ -47,12 +47,13 @@ class OllamaPerformanceTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            body = engine.generate(
-                "Write a detailed explanation of how computers work.",
-                model=model,
-                options={"num_predict": 100},
-                timeout=300,
-            )
+            with self._check_scope(engine, checks, "throughput"):
+                body = engine.generate(
+                    "Write a detailed explanation of how computers work.",
+                    model=model,
+                    options={"num_predict": 100},
+                    timeout=300,
+                )
         except Exception as e:
             checks.append(CheckResult(name="throughput_error", passed=False, detail=str(e)))
             return

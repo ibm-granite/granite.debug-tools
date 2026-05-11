@@ -71,13 +71,14 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            chunks = list(
-                engine.generate_stream(
-                    "Why is the sky blue? Be brief but factual.",
-                    model=model,
-                    options={"temperature": 0, "seed": 123, "num_predict": 100},
+            with self._check_scope(engine, checks, "generate_streaming"):
+                chunks = list(
+                    engine.generate_stream(
+                        "Why is the sky blue? Be brief but factual.",
+                        model=model,
+                        options={"temperature": 0, "seed": 123, "num_predict": 100},
+                    )
                 )
-            )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -126,13 +127,14 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            chunks = list(
-                engine.native_chat_stream(
-                    [{"role": "user", "content": "Say hello and be brief."}],
-                    model=model,
-                    options={"temperature": 0, "num_predict": 50},
+            with self._check_scope(engine, checks, "chat_streaming"):
+                chunks = list(
+                    engine.native_chat_stream(
+                        [{"role": "user", "content": "Say hello and be brief."}],
+                        model=model,
+                        options={"temperature": 0, "num_predict": 50},
+                    )
                 )
-            )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -169,14 +171,15 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            chunks = list(
-                engine.native_chat_stream(
-                    [{"role": "user", "content": "Get the weather in London."}],
-                    model=model,
-                    tools=[WEATHER_TOOL],
-                    options={"temperature": 0},
+            with self._check_scope(engine, checks, "tool_streaming"):
+                chunks = list(
+                    engine.native_chat_stream(
+                        [{"role": "user", "content": "Get the weather in London."}],
+                        model=model,
+                        tools=[WEATHER_TOOL],
+                        options={"temperature": 0},
+                    )
                 )
-            )
         except Exception as e:
             checks.append(
                 CheckResult(
@@ -204,13 +207,14 @@ class OllamaStreamingTest(AbstractValidationTest):
         checks: list[CheckResult],
     ) -> None:
         try:
-            chunks = list(
-                engine.native_chat_stream(
-                    [{"role": "user", "content": "Write a haiku about mountains."}],
-                    model=model,
-                    options={"temperature": 0, "num_predict": 100},
+            with self._check_scope(engine, checks, "streaming_no_leakage"):
+                chunks = list(
+                    engine.native_chat_stream(
+                        [{"role": "user", "content": "Write a haiku about mountains."}],
+                        model=model,
+                        options={"temperature": 0, "num_predict": 100},
+                    )
                 )
-            )
         except Exception as e:
             checks.append(
                 CheckResult(
