@@ -75,13 +75,11 @@ class InspectionLogger:
         if scope is None:
             return
         self._scope = None
-        names = [getattr(c, "name", None) for c in scope.checks[scope.start_idx:]]
+        names = [getattr(c, "name", None) for c in scope.checks[scope.start_idx :]]
         for record in scope.exchanges:
             if names:
                 for name in names:
-                    test_id = (
-                        f"{self._current_test}:{name}" if self._current_test else name
-                    )
+                    test_id = f"{self._current_test}:{name}" if self._current_test else name
                     self._write_entry({**record, "test_id": test_id})
             else:
                 self._write_entry({**record, "test_id": self._current_test})
