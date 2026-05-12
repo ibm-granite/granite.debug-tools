@@ -38,10 +38,13 @@ jobs:
       - name: Pull Ollama models
         run: |
           ollama serve &
-          sleep 5
+          until curl -sf http://localhost:11434/ >/dev/null; do sleep 1; done
           ollama pull granite4.1:3b
           ollama pull granite4.1:8b
           pkill ollama
+
+      - name: Install huggingface-cli
+        run: uv pip install huggingface-hub
 
       - name: Download llama.cpp models
         run: |
@@ -69,6 +72,7 @@ jobs:
         run: uv run python weekly_report.py
 
       - name: Upload results to IBM COS
+        if: always()
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.COS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.COS_SECRET_ACCESS_KEY }}

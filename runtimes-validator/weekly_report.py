@@ -96,7 +96,7 @@ def run_combination(
     extra: dict[str, Any] | None = None,
     headers: list[str] | None = None,
 ) -> int:
-    from granite_validation.cli import main as validate_main
+    from runtimes_validator.cli import main as validate_main
 
     argv = [
         "--engine",
