@@ -80,9 +80,7 @@ class OpenAICompatibleEngine(AbstractEngine):
             except requests.Timeout as exc:
                 self._mark_timeout()
                 if self._inspection is not None:
-                    self._inspection.log_exchange(
-                        payload, None, streaming=False, path=path
-                    )
+                    self._inspection.log_exchange(payload, None, streaming=False, path=path)
                     logged = True
                 raise self._timeout_error() from exc
             resp.raise_for_status()
@@ -90,9 +88,7 @@ class OpenAICompatibleEngine(AbstractEngine):
             return body  # type: ignore[no-any-return]
         finally:
             if not logged and self._inspection is not None:
-                self._inspection.log_exchange(
-                    payload, body, streaming=False, path=path
-                )
+                self._inspection.log_exchange(payload, body, streaming=False, path=path)
 
     def _post_stream_sse(
         self,
@@ -121,9 +117,7 @@ class OpenAICompatibleEngine(AbstractEngine):
             except requests.Timeout as exc:
                 self._mark_timeout()
                 if self._inspection is not None:
-                    self._inspection.log_exchange(
-                        payload, None, streaming=True, path=path
-                    )
+                    self._inspection.log_exchange(payload, None, streaming=True, path=path)
                     logged = True
                 raise self._timeout_error() from exc
             resp.raise_for_status()
@@ -140,16 +134,12 @@ class OpenAICompatibleEngine(AbstractEngine):
             except requests.Timeout as exc:
                 self._mark_timeout()
                 if self._inspection is not None:
-                    self._inspection.log_exchange(
-                        payload, chunks, streaming=True, path=path
-                    )
+                    self._inspection.log_exchange(payload, chunks, streaming=True, path=path)
                     logged = True
                 raise self._timeout_error() from exc
         finally:
             if not logged and self._inspection is not None:
-                self._inspection.log_exchange(
-                    payload, chunks, streaming=True, path=path
-                )
+                self._inspection.log_exchange(payload, chunks, streaming=True, path=path)
 
     def _post_stream_ndjson(
         self,
@@ -179,9 +169,7 @@ class OpenAICompatibleEngine(AbstractEngine):
             except requests.Timeout as exc:
                 self._mark_timeout()
                 if self._inspection is not None:
-                    self._inspection.log_exchange(
-                        payload, None, streaming=True, path=path
-                    )
+                    self._inspection.log_exchange(payload, None, streaming=True, path=path)
                     logged = True
                 raise self._timeout_error() from exc
             resp.raise_for_status()
@@ -195,16 +183,12 @@ class OpenAICompatibleEngine(AbstractEngine):
             except requests.Timeout as exc:
                 self._mark_timeout()
                 if self._inspection is not None:
-                    self._inspection.log_exchange(
-                        payload, chunks, streaming=True, path=path
-                    )
+                    self._inspection.log_exchange(payload, chunks, streaming=True, path=path)
                     logged = True
                 raise self._timeout_error() from exc
         finally:
             if not logged and self._inspection is not None:
-                self._inspection.log_exchange(
-                    payload, chunks, streaming=True, path=path
-                )
+                self._inspection.log_exchange(payload, chunks, streaming=True, path=path)
 
     # -- Public API --------------------------------------------------------
 

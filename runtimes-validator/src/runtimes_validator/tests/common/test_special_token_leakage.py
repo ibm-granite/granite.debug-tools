@@ -100,7 +100,10 @@ class SpecialTokenLeakageTest(AbstractValidationTest):
                 response = engine.chat(
                     [
                         {"role": "system", "content": "You are a helpful assistant. Be concise."},
-                        {"role": "user", "content": "Explain how the internet works in simple terms."},
+                        {
+                            "role": "user",
+                            "content": "Explain how the internet works in simple terms.",
+                        },
                     ],
                     max_tokens=256,
                 )
