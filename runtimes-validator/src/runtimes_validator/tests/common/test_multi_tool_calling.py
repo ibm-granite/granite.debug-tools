@@ -157,12 +157,60 @@ class MultiToolCallingTest(AbstractValidationTest):
 
         args = _parse_args(tool_calls[0])
         required_keys = {"amount", "from_currency", "to_currency"}
+        all_present = required_keys.issubset(args.keys())
         checks.append(
             CheckResult(
                 name="multi_auto_args_present",
-                passed=required_keys.issubset(args.keys()),
+                passed=all_present,
                 expected=f"keys {sorted(required_keys)} in arguments",
                 actual=str(args),
+            )
+        )
+
+        if not all_present:
+            return
+
+        amount = args.get("amount")
+        amount_is_numeric = isinstance(amount, (int, float)) and not isinstance(amount, bool)
+        checks.append(
+            CheckResult(
+                name="multi_auto_amount_numeric",
+                passed=amount_is_numeric,
+                expected="number (int|float)",
+                actual=f"{type(amount).__name__}={amount!r}",
+            )
+        )
+
+        try:
+            amount_matches = float(amount) == 100.0  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            amount_matches = False
+        checks.append(
+            CheckResult(
+                name="multi_auto_amount_value",
+                passed=amount_matches,
+                expected=100,
+                actual=amount,
+            )
+        )
+
+        from_value = str(args.get("from_currency", "")).strip().upper()
+        checks.append(
+            CheckResult(
+                name="multi_auto_from_currency",
+                passed=from_value == "USD",
+                expected="USD",
+                actual=args.get("from_currency"),
+            )
+        )
+
+        to_value = str(args.get("to_currency", "")).strip().upper()
+        checks.append(
+            CheckResult(
+                name="multi_auto_to_currency",
+                passed=to_value == "EUR",
+                expected="EUR",
+                actual=args.get("to_currency"),
             )
         )
 
