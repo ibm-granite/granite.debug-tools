@@ -23,23 +23,34 @@ def register_test(test_id: str):
 
 
 def discover_tests() -> None:
-    """Auto-import all modules under tests/common/ and tests/engine_specific/ to trigger registration."""
-    from runtimes_validator.tests import common, engine_specific
+    """Auto-import all modules under tests/common/, tests/engine_specific/, and tests/multimodal/."""
+    from runtimes_validator.tests import common, engine_specific, multimodal
 
-    for package in (common, engine_specific):
+    for package in (common, engine_specific, multimodal):
         for importer, modname, _ispkg in pkgutil.walk_packages(
             package.__path__, prefix=package.__name__ + "."
         ):
             importlib.import_module(modname)
 
 
-def get_tests(engine_id: str | None = None) -> list[type[AbstractValidationTest]]:
-    """Return test classes applicable to the given engine (or all if engine_id is None)."""
+def get_tests(
+    engine_id: str | None = None,
+    modalities: set[str] | None = None,
+) -> list[type[AbstractValidationTest]]:
+    """Return test classes applicable to the given engine and modalities.
+
+    A test passes the modality filter if any of its declared modalities is in
+    ``modalities``. If ``modalities`` is None, no modality filter is applied.
+    """
     results = []
     for cls in _TESTS.values():
-        applicable = cls().applicable_engines()
-        if applicable is None or engine_id is None or engine_id in applicable:
-            results.append(cls)
+        instance = cls()
+        applicable = instance.applicable_engines()
+        if not (applicable is None or engine_id is None or engine_id in applicable):
+            continue
+        if modalities is not None and not (set(instance.modalities()) & modalities):
+            continue
+        results.append(cls)
     return results
 
 

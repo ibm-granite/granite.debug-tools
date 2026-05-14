@@ -53,6 +53,9 @@ class VllmEngine(OpenAICompatibleEngine):
     def engine_id(self) -> str:
         return "vllm"
 
+    def supported_modalities(self) -> set[str]:
+        return {"text", "vision", "speech"}
+
     # -- Lifecycle --------------------------------------------------------
 
     def start(self, model: str) -> None:
