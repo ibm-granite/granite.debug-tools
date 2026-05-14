@@ -37,13 +37,14 @@ class ChatCompletionTest(AbstractValidationTest):
 
     def _check_basic(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {"role": "system", "content": "You are a helpful assistant. Be brief."},
-                    {"role": "user", "content": "What is 2+2?"},
-                ],
-                max_tokens=64,
-            )
+            with self._check_scope(engine, checks, "basic"):
+                response = engine.chat(
+                    [
+                        {"role": "system", "content": "You are a helpful assistant. Be brief."},
+                        {"role": "user", "content": "What is 2+2?"},
+                    ],
+                    max_tokens=64,
+                )
         except Exception as e:
             checks.append(CheckResult(name="basic_error", passed=False, detail=str(e)))
             return
@@ -94,10 +95,11 @@ class ChatCompletionTest(AbstractValidationTest):
 
     def _check_no_system(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [{"role": "user", "content": "Say hello."}],
-                max_tokens=32,
-            )
+            with self._check_scope(engine, checks, "no_system"):
+                response = engine.chat(
+                    [{"role": "user", "content": "Say hello."}],
+                    max_tokens=32,
+                )
         except Exception as e:
             checks.append(CheckResult(name="no_system_error", passed=False, detail=str(e)))
             return
@@ -121,15 +123,16 @@ class ChatCompletionTest(AbstractValidationTest):
 
     def _check_max_tokens(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {
-                        "role": "user",
-                        "content": "Write a very long essay about the history of computing.",
-                    },
-                ],
-                max_tokens=5,
-            )
+            with self._check_scope(engine, checks, "max_tokens"):
+                response = engine.chat(
+                    [
+                        {
+                            "role": "user",
+                            "content": "Write a very long essay about the history of computing.",
+                        },
+                    ],
+                    max_tokens=5,
+                )
         except Exception as e:
             checks.append(CheckResult(name="max_tokens_error", passed=False, detail=str(e)))
             return

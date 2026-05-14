@@ -70,3 +70,11 @@ class AbstractEngine(ABC):
         before start(). The runner calls this before start() to determine
         the execution mode, and during lifecycle-failure reporting.
         """
+
+    def supported_modalities(self) -> set[str]:
+        """Input modalities this engine can route (e.g. 'text', 'vision', 'speech').
+
+        Conservative default: text only. Engines that ingest images, audio,
+        or other content must override and declare what they actually support.
+        """
+        return {"text"}

@@ -57,15 +57,16 @@ class ToolCallingTest(AbstractValidationTest):
 
     def _check_required(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "What is the weather in Paris?"},
-                ],
-                tools=[WEATHER_TOOL],
-                tool_choice="required",
-                max_tokens=256,
-            )
+            with self._check_scope(engine, checks, "required"):
+                response = engine.chat(
+                    [
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": "What is the weather in Paris?"},
+                    ],
+                    tools=[WEATHER_TOOL],
+                    tool_choice="required",
+                    max_tokens=256,
+                )
         except Exception as e:
             checks.append(CheckResult(name="required_error", passed=False, detail=str(e)))
             return
@@ -108,15 +109,16 @@ class ToolCallingTest(AbstractValidationTest):
 
     def _check_auto(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "What is the weather in Tokyo right now?"},
-                ],
-                tools=[WEATHER_TOOL],
-                tool_choice="auto",
-                max_tokens=256,
-            )
+            with self._check_scope(engine, checks, "auto"):
+                response = engine.chat(
+                    [
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": "What is the weather in Tokyo right now?"},
+                    ],
+                    tools=[WEATHER_TOOL],
+                    tool_choice="auto",
+                    max_tokens=256,
+                )
         except Exception as e:
             checks.append(CheckResult(name="auto_error", passed=False, detail=str(e)))
             return
@@ -144,35 +146,36 @@ class ToolCallingTest(AbstractValidationTest):
 
     def _check_roundtrip(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "What is the weather in Paris?"},
-                    {
-                        "role": "assistant",
-                        "content": None,
-                        "tool_calls": [
-                            {
-                                "id": "call_1",
-                                "type": "function",
-                                "function": {
-                                    "name": "get_weather",
-                                    "arguments": json.dumps({"location": "Paris"}),
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "role": "tool",
-                        "tool_call_id": "call_1",
-                        "content": json.dumps(
-                            {"temperature": 18, "condition": "sunny", "humidity": 65}
-                        ),
-                    },
-                ],
-                tools=[WEATHER_TOOL],
-                max_tokens=128,
-            )
+            with self._check_scope(engine, checks, "roundtrip"):
+                response = engine.chat(
+                    [
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": "What is the weather in Paris?"},
+                        {
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": [
+                                {
+                                    "id": "call_1",
+                                    "type": "function",
+                                    "function": {
+                                        "name": "get_weather",
+                                        "arguments": json.dumps({"location": "Paris"}),
+                                    },
+                                }
+                            ],
+                        },
+                        {
+                            "role": "tool",
+                            "tool_call_id": "call_1",
+                            "content": json.dumps(
+                                {"temperature": 18, "condition": "sunny", "humidity": 65}
+                            ),
+                        },
+                    ],
+                    tools=[WEATHER_TOOL],
+                    max_tokens=128,
+                )
         except Exception as e:
             checks.append(CheckResult(name="roundtrip_error", passed=False, detail=str(e)))
             return

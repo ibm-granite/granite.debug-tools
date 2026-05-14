@@ -38,7 +38,8 @@ class BasicGenerationTest(AbstractValidationTest):
 
         for question in QUESTIONS:
             try:
-                response = engine.chat([{"role": "user", "content": question["prompt"]}])
+                with self._check_scope(engine, checks, question["id"]):
+                    response = engine.chat([{"role": "user", "content": question["prompt"]}])
                 content = (response.get("content") or "").lower()
             except Exception as e:
                 checks.append(

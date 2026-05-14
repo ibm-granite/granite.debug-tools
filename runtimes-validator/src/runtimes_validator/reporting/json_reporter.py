@@ -24,7 +24,9 @@ class JsonReporter(AbstractReporter):
         data = asdict(report)
         # Add computed fields
         data["all_passed"] = report.all_passed
+        data["skipped_count"] = sum(1 for r in report.results if r.skipped)
         for i, result in enumerate(report.results):
             data["results"][i]["passed"] = result.passed
+            data["results"][i]["status"] = result.status
 
         path.write_text(json.dumps(data, indent=2, default=str))

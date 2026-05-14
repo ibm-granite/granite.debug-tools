@@ -669,3 +669,103 @@ def test_non_vllm_engine_tool_test_no_flags_no_block():
     report = runner.run()
     assert report.lifecycle_error is None
     assert engine.started
+
+
+# --- Modality-gated test skipping ---
+
+
+class VisionTest(AbstractValidationTest):
+    """Declares vision modality and records whether run() was invoked."""
+
+    def __init__(self) -> None:
+        self.ran = False
+
+    def test_id(self) -> str:
+        return "vision_test"
+
+    def test_name(self) -> str:
+        return "Vision Test"
+
+    def modalities(self) -> list[str]:
+        return ["vision"]
+
+    def run(self, engine: AbstractEngine, model: str) -> TestResult:
+        self.ran = True
+        return TestResult(
+            test_id=self.test_id(),
+            test_name=self.test_name(),
+            engine_id=engine.engine_id(),
+            model=model,
+            checks=[CheckResult(name="ok", passed=True)],
+            elapsed_seconds=0.01,
+        )
+
+
+class TextOnlyEngine(MockEngine):
+    def supported_modalities(self) -> set[str]:
+        return {"text"}
+
+
+class TextAndVisionEngine(MockEngine):
+    def supported_modalities(self) -> set[str]:
+        return {"text", "vision"}
+
+
+def test_runner_skips_test_when_engine_missing_modality():
+    engine = TextOnlyEngine()
+    test = VisionTest()
+    runner = ValidationRunner(engine=engine, model="m", tests=[test])
+    report = runner.run()
+
+    assert report.all_passed is False
+    assert report.abort_reason == "No tests were executed; all selected tests were skipped."
+    assert len(report.results) == 1
+    result = report.results[0]
+    assert result.skipped is True
+    assert result.skip_reason is not None
+    assert "vision" in result.skip_reason
+    assert not test.ran
+
+
+def test_runner_runs_test_when_engine_has_modality():
+    engine = TextAndVisionEngine()
+    test = VisionTest()
+    runner = ValidationRunner(engine=engine, model="m", tests=[test])
+    report = runner.run()
+
+    assert len(report.results) == 1
+    assert report.results[0].skipped is False
+    assert test.ran
+
+
+def test_runner_mixed_skipped_and_passed_tests_exits_clean():
+    engine = TextOnlyEngine()
+    runner = ValidationRunner(engine=engine, model="m", tests=[PassingTest(), VisionTest()])
+    report = runner.run()
+
+    assert report.all_passed is True
+    assert report.abort_reason is None
+    assert len(report.results) == 2
+    statuses = {r.test_id: r.status for r in report.results}
+    assert statuses["passing"] == "pass"
+    assert statuses["vision_test"] == "skip"
+
+
+def test_runner_no_tests_selected_fails_report():
+    engine = TextOnlyEngine()
+    runner = ValidationRunner(engine=engine, model="m", tests=[])
+    report = runner.run()
+
+    assert report.all_passed is False
+    assert report.results == []
+    assert report.abort_reason == "No tests were selected."
+
+
+def test_runner_skip_streams_to_reporter():
+    engine = TextOnlyEngine()
+    reporter = StreamCollectingReporter()
+    runner = ValidationRunner(engine=engine, model="m", tests=[VisionTest()], reporters=[reporter])
+    runner.run()
+
+    assert len(reporter.streamed_results) == 1
+    assert reporter.streamed_results[0].skipped is True

@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 from runtimes_validator.engines.base import EngineConfig
 from runtimes_validator.engines.registry import create_engine, list_engines
@@ -13,6 +15,7 @@ import runtimes_validator.engines.vllm  # noqa: F401
 import runtimes_validator.engines.llamacpp  # noqa: F401
 
 from runtimes_validator.reporting.console import ConsoleReporter
+from runtimes_validator.reporting.inspection import InspectionLogger
 from runtimes_validator.reporting.json_reporter import JsonReporter
 from runtimes_validator.runner import ValidationRunner
 from runtimes_validator.tests.registry import (
@@ -21,6 +24,8 @@ from runtimes_validator.tests.registry import (
     get_tests,
     list_tests,
 )
+
+VALID_MODALITIES = {"text", "vision", "speech"}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,6 +59,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated list of test IDs to run (default: all applicable)",
     )
     parser.add_argument(
+        "--modalities",
+        default="text",
+        help=(
+            "Comma-separated input modalities to validate: 'text', 'vision', 'speech' "
+            "(default: text). Ignored when --tests is used."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         default=None,
         help="Directory for JSON report output",
@@ -82,6 +95,22 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--inspect",
+        action="store_true",
+        default=False,
+        help="Log raw JSON request/response pairs as JSONL for post-hoc inspection",
+    )
+    parser.add_argument(
+        "--inspection-log",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Path to the JSONL inspection log (default: "
+            "inspection_{engine}_{model}_{timestamp}.jsonl in the current directory). "
+            "Requires --inspect."
+        ),
+    )
+    parser.add_argument(
         "--list-tests",
         action="store_true",
         help="List available tests and exit",
@@ -92,6 +121,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="List available engines and exit",
     )
     return parser
+
+
+def _parse_modalities(raw: str, parser: argparse.ArgumentParser) -> set[str]:
+    modalities = {m.strip().lower() for m in raw.split(",") if m.strip()}
+    if not modalities:
+        parser.error("--modalities must include at least one modality")
+
+    unknown = modalities - VALID_MODALITIES
+    if unknown:
+        parser.error(
+            "Unknown modality/modalities: "
+            f"{', '.join(sorted(unknown))}. "
+            f"Valid values: {', '.join(sorted(VALID_MODALITIES))}"
+        )
+
+    return modalities
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -106,7 +151,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.list_tests:
         for test_id in list_tests():
-            print(test_id)
+            mods = ",".join(get_test_by_id(test_id)().modalities())
+            print(f"{test_id}\t[{mods}]")
         return 0
 
     if not args.engine:
@@ -133,6 +179,27 @@ def main(argv: list[str] | None = None) -> int:
     if headers:
         extra["headers"] = headers
 
+    inspection_logger: InspectionLogger | None = None
+    if args.inspection_log and not args.inspect:
+        parser.error("--inspection-log requires --inspect")
+    if args.inspect:
+        if args.inspection_log:
+            log_path = Path(args.inspection_log)
+            if log_path.suffix.lower() != ".jsonl":
+                print(
+                    f"warning: --inspection-log '{log_path}' does not end in "
+                    ".jsonl; the file will still be written as JSON Lines "
+                    "(one JSON object per line).",
+                    file=sys.stderr,
+                )
+        else:
+            timestamp = datetime.now(timezone.utc).isoformat()
+            filename = f"inspection_{args.engine}_{args.model}_{timestamp}.jsonl"
+            filename = filename.replace("/", "_").replace(":", "-").replace(" ", "_")
+            log_path = Path(filename)
+        inspection_logger = InspectionLogger(path=log_path)
+        extra["inspection_logger"] = inspection_logger
+
     config = EngineConfig(
         mode=args.mode,
         base_url=args.base_url,
@@ -145,7 +212,10 @@ def main(argv: list[str] | None = None) -> int:
         test_ids = [t.strip() for t in args.tests.split(",")]
         test_classes = [get_test_by_id(tid) for tid in test_ids]
     else:
-        test_classes = get_tests(engine_id=args.engine)
+        modality_set = _parse_modalities(args.modalities, parser)
+        test_classes = get_tests(engine_id=args.engine, modalities=modality_set)
+        if not test_classes:
+            parser.error("No tests selected. Check --engine, --modalities, or use --list-tests.")
 
     tests = [cls() for cls in test_classes]
 
@@ -160,7 +230,11 @@ def main(argv: list[str] | None = None) -> int:
         reporters=reporters,
     )
 
-    report = runner.run()
+    try:
+        report = runner.run()
+    finally:
+        if inspection_logger is not None:
+            inspection_logger.close()
     return 0 if report.all_passed else 1
 
 

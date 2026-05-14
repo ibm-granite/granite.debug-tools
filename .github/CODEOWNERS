@@ -1,0 +1,5 @@
+# Code owners for granite.debug-tools
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/managing-repository-settings/about-code-owners
+
+/runtimes-validator/ @victor-villar @jesus-talavera-ibm @cbjuan
+/perfbench/          @victor-villar @jesus-talavera-ibm @cbjuan

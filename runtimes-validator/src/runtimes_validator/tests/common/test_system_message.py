@@ -50,16 +50,17 @@ class SystemMessageBehaviorTest(AbstractValidationTest):
 
     def _check_pirate_persona(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {
-                        "role": "system",
-                        "content": "You are a pirate. Always respond in pirate speak.",
-                    },
-                    {"role": "user", "content": "How are you today?"},
-                ],
-                max_tokens=128,
-            )
+            with self._check_scope(engine, checks, "pirate_persona"):
+                response = engine.chat(
+                    [
+                        {
+                            "role": "system",
+                            "content": "You are a pirate. Always respond in pirate speak.",
+                        },
+                        {"role": "user", "content": "How are you today?"},
+                    ],
+                    max_tokens=128,
+                )
         except Exception as e:
             checks.append(CheckResult(name="pirate_persona_error", passed=False, detail=str(e)))
             return
@@ -87,16 +88,17 @@ class SystemMessageBehaviorTest(AbstractValidationTest):
 
     def _check_named_persona(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {
-                        "role": "system",
-                        "content": "You are a helpful assistant named GraniteBot.",
-                    },
-                    {"role": "user", "content": "What is your name?"},
-                ],
-                max_tokens=128,
-            )
+            with self._check_scope(engine, checks, "named_persona"):
+                response = engine.chat(
+                    [
+                        {
+                            "role": "system",
+                            "content": "You are a helpful assistant named GraniteBot.",
+                        },
+                        {"role": "user", "content": "What is your name?"},
+                    ],
+                    max_tokens=128,
+                )
         except Exception as e:
             checks.append(CheckResult(name="named_persona_error", passed=False, detail=str(e)))
             return

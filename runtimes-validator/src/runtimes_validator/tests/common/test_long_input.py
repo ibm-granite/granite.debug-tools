@@ -48,10 +48,11 @@ class LongInputTest(AbstractValidationTest):
         prompt = WAR_AND_PEACE_PASSAGE + " What country is this passage primarily discussing?"
 
         try:
-            response = engine.chat(
-                [{"role": "user", "content": prompt}],
-                max_tokens=256,
-            )
+            with self._check_scope(engine, checks, "long_input"):
+                response = engine.chat(
+                    [{"role": "user", "content": prompt}],
+                    max_tokens=256,
+                )
         except Exception as e:
             checks.append(CheckResult(name="long_input_error", passed=False, detail=str(e)))
             return TestResult(

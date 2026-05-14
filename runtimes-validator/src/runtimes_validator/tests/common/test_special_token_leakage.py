@@ -60,15 +60,16 @@ class SpecialTokenLeakageTest(AbstractValidationTest):
 
     def _check_generate_leakage(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {
-                        "role": "user",
-                        "content": "Write a short paragraph about artificial intelligence.",
-                    }
-                ],
-                max_tokens=256,
-            )
+            with self._check_scope(engine, checks, "generate_leakage"):
+                response = engine.chat(
+                    [
+                        {
+                            "role": "user",
+                            "content": "Write a short paragraph about artificial intelligence.",
+                        }
+                    ],
+                    max_tokens=256,
+                )
         except Exception as e:
             checks.append(CheckResult(name="leakage_generate_error", passed=False, detail=str(e)))
             return
@@ -95,13 +96,17 @@ class SpecialTokenLeakageTest(AbstractValidationTest):
 
     def _check_chat_leakage(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [
-                    {"role": "system", "content": "You are a helpful assistant. Be concise."},
-                    {"role": "user", "content": "Explain how the internet works in simple terms."},
-                ],
-                max_tokens=256,
-            )
+            with self._check_scope(engine, checks, "chat_leakage"):
+                response = engine.chat(
+                    [
+                        {"role": "system", "content": "You are a helpful assistant. Be concise."},
+                        {
+                            "role": "user",
+                            "content": "Explain how the internet works in simple terms.",
+                        },
+                    ],
+                    max_tokens=256,
+                )
         except Exception as e:
             checks.append(CheckResult(name="leakage_chat_error", passed=False, detail=str(e)))
             return
@@ -128,10 +133,11 @@ class SpecialTokenLeakageTest(AbstractValidationTest):
 
     def _check_eos_stops(self, engine: AbstractEngine, checks: list[CheckResult]) -> None:
         try:
-            response = engine.chat(
-                [{"role": "user", "content": "Say just the word 'hello' and nothing else."}],
-                max_tokens=500,
-            )
+            with self._check_scope(engine, checks, "eos_stops"):
+                response = engine.chat(
+                    [{"role": "user", "content": "Say just the word 'hello' and nothing else."}],
+                    max_tokens=500,
+                )
         except Exception as e:
             checks.append(CheckResult(name="eos_stops_error", passed=False, detail=str(e)))
             return

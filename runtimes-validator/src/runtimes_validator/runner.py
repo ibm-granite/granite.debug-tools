@@ -81,7 +81,9 @@ class ValidationRunner:
 
     def _check_tool_test_requirements(self) -> str | None:
         """Return a warning if tool tests need missing vLLM server flags, else None."""
-        has_tool_tests = any(t.test_id() == "tool_calling" for t in self._tests)
+        has_tool_tests = any(
+            t.test_id() in {"tool_calling", "multi_tool_calling"} for t in self._tests
+        )
         if not has_tool_tests:
             return None
 
@@ -225,6 +227,28 @@ class ValidationRunner:
 
         for test in self._tests:
             self._reset_timeout_observation()
+            self._set_inspection_test(test.test_id())
+
+            missing = set(test.modalities()) - self._engine.supported_modalities()
+            if missing:
+                reason = (
+                    f"engine '{self._engine.engine_id()}' does not support "
+                    f"modality/modalities: {', '.join(sorted(missing))}"
+                )
+                result = TestResult(
+                    test_id=test.test_id(),
+                    test_name=test.test_name(),
+                    engine_id=self._engine.engine_id(),
+                    model=self._model,
+                    checks=[],
+                    elapsed_seconds=0.0,
+                    skipped=True,
+                    skip_reason=reason,
+                )
+                results.append(result)
+                self._emit_test_complete(result)
+                continue
+
             try:
                 result = test.run(self._engine, self._model)
             except Exception as e:
@@ -237,6 +261,8 @@ class ValidationRunner:
                     elapsed_seconds=0.0,
                     error=str(e),
                 )
+            finally:
+                self._set_inspection_test(None)
             results.append(result)
             self._emit_test_complete(result)
 
@@ -253,6 +279,11 @@ class ValidationRunner:
                 break
 
         total_elapsed = time.time() - start
+        if abort_reason is None:
+            if not results:
+                abort_reason = "No tests were selected."
+            elif all(r.skipped for r in results):
+                abort_reason = "No tests were executed; all selected tests were skipped."
 
         return self._build_report(
             info,
@@ -265,6 +296,14 @@ class ValidationRunner:
         reset = getattr(self._engine, "reset_timeout_observed", None)
         if callable(reset):
             reset()
+
+    def _set_inspection_test(self, test_id: str | None) -> None:
+        inspection = getattr(self._engine, "_inspection", None)
+        if inspection is None:
+            return
+        setter = getattr(inspection, "set_current_test", None)
+        if callable(setter):
+            setter(test_id)
 
     def _engine_timed_out(self) -> bool:
         checker = getattr(self._engine, "timed_out_since_last_check", None)
