@@ -76,6 +76,8 @@ def build_matrix(
             if not entry:
                 continue
             if isinstance(entry, dict):
+                if "model" not in entry:
+                    continue
                 model_id = entry["model"]
                 merged_cfg = deep_merge(engine_cfg, entry)
                 del merged_cfg["model"]
