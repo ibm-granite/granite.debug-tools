@@ -81,7 +81,9 @@ class ValidationRunner:
 
     def _check_tool_test_requirements(self) -> str | None:
         """Return a warning if tool tests need missing vLLM server flags, else None."""
-        has_tool_tests = any(t.test_id() == "tool_calling" for t in self._tests)
+        has_tool_tests = any(
+            t.test_id() in {"tool_calling", "multi_tool_calling"} for t in self._tests
+        )
         if not has_tool_tests:
             return None
 

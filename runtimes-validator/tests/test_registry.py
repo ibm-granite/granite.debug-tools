@@ -12,6 +12,7 @@ COMMON_IDS = {
     "concurrent_requests",
     "multi_turn",
     "tool_calling",
+    "multi_tool_calling",
     "system_message_behavior",
     "long_input",
     "special_token_leakage",
@@ -91,4 +92,4 @@ def test_llamacpp_tests_excluded_for_ollama_engine():
 def test_total_test_count():
     discover_tests()
     all_ids = list_tests()
-    assert len(all_ids) >= 18, f"Expected >= 18 tests, got {len(all_ids)}: {all_ids}"
+    assert len(all_ids) >= 19, f"Expected >= 19 tests, got {len(all_ids)}: {all_ids}"
