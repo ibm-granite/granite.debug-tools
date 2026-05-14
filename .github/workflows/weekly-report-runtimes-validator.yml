@@ -1,0 +1,92 @@
+name: Weekly Report - Runtimes Validator
+
+on:
+  schedule:
+    - cron: "23 8 * * 1"  # Every Monday at ~8:23 UTC
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: runtimes-validator
+
+jobs:
+  validate-and-upload:
+    runs-on: [self-hosted, gpu]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v8.1.0
+        with:
+          version: "latest"
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+        working-directory: .
+
+      - name: Install llama.cpp
+        run: |
+          curl -fsSL -o llama-server.tar.gz \
+            https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-server-linux-x86_64-cuda.tar.gz
+          tar -xzf llama-server.tar.gz
+          sudo mv build/bin/llama-server /usr/local/bin/
+          rm -rf llama-server.tar.gz build/
+        working-directory: .
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Pull Ollama models
+        run: |
+          ollama serve &
+          until curl -sf http://localhost:11434/ >/dev/null; do sleep 1; done
+          ollama pull granite4.1:3b
+          ollama pull granite4.1:8b
+          pkill ollama
+
+      - name: Install huggingface-cli
+        run: uv pip install huggingface-hub
+
+      - name: Download llama.cpp models
+        run: |
+          uv run huggingface-cli download ibm-granite/granite-4.1-3b-instruct --local-dir models/granite-4.1-3b --include "*.gguf"
+          uv run huggingface-cli download ibm-granite/granite-4.1-8b-instruct --local-dir models/granite-4.1-8b --include "*Q4_K_M.gguf"
+
+      - name: Create CI matrix config
+        run: |
+          cat > weekly_matrix.local.toml << 'EOF'
+          [engines.ollama]
+          mode = "managed"
+
+          [engines.llamacpp]
+          mode = "managed"
+          extra = { n_gpu_layers = 99 }
+
+          [models.granite-4_1-3b]
+          llamacpp = "models/granite-4.1-3b/granite-4.1-3b-instruct.gguf"
+
+          [models.granite-4_1-8b]
+          llamacpp = "models/granite-4.1-8b/granite-4.1-8b-instruct-Q4_K_M.gguf"
+          EOF
+
+      - name: Run weekly validation
+        run: uv run python weekly_report.py
+
+      - name: Upload results to IBM COS
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.COS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.COS_SECRET_ACCESS_KEY }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          aws s3 sync \
+            results/weekly/$DATE/ \
+            s3://${{ secrets.COS_BUCKET }}/weekly/$DATE/ \
+            --endpoint-url ${{ secrets.COS_ENDPOINT }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weekly-report-${{ github.run_id }}
+          path: runtimes-validator/results/weekly/
+          retention-days: 30
