@@ -59,6 +59,36 @@ _RESULT_DIRS: dict[str, pathlib.Path] = {
 }
 
 
+def _safe_result_dir(
+    raw: str, default: pathlib.Path, *parts: str
+) -> pathlib.Path | str:
+    """Resolve a caller-supplied result directory inside ``_RESULTS_ROOT``.
+
+    Tool arguments reach us from the model, so they cannot be trusted to
+    pick a write location: ``..`` segments or an absolute path would let
+    a caller create directories and drop JSON files anywhere the server
+    process can write.  Relative paths are taken from the results root
+    and *parts* (model name, timestamp) are appended before the check,
+    so a traversal hidden in any component is caught.
+
+    Returns the resolved path, or an error string when it escapes.
+    """
+    root = _RESULTS_ROOT.resolve()
+    base = pathlib.Path(raw) if raw else default
+    if not base.is_absolute():
+        base = root / base
+    path = base.joinpath(*(p for p in parts if p)).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError:
+        logger.warning("Rejected out-of-root result directory: %r", raw)
+        return (
+            f"Error: invalid result directory '{raw}' — results must stay "
+            f"inside {root}."
+        )
+    return path
+
+
 async def _stream_reader(
     stream: asyncio.StreamReader,
     output: list[str],
@@ -633,7 +663,8 @@ async def run_vllm_benchmark(
         max_concurrency: Maximum number of concurrent requests.
         random_input_len: Input token length (random dataset).
         random_output_len: Output token length (random dataset).
-        result_dir: Directory to save results in.
+        result_dir: Directory to save results in.  Must resolve inside
+            the project results root; traversal is rejected.
         ready_check_timeout_sec: Seconds to wait for server readiness.
         api_token: API authentication token. When ``auth_header_name``
             is omitted the token is sent as a standard
@@ -644,6 +675,12 @@ async def run_vllm_benchmark(
             ``Authorization: Bearer`` header.
         request_rate: Requests per second (omit for unlimited).
     """
+    result_path = _safe_result_dir(
+        result_dir, _RESULT_DIRS["vllm"], model.replace("/", "_")
+    )
+    if isinstance(result_path, str):
+        return result_path
+
     cmd: list[str] = [
         "vllm",
         "bench",
@@ -669,7 +706,7 @@ async def run_vllm_benchmark(
         "--random-output-len",
         str(random_output_len),
         "--result-dir",
-        f"{result_dir}/{model.replace('/', '_')}",
+        str(result_path),
         "--result-filename",
         f"{datetime.now().strftime('%Y%m%d%H%M%S')}_VLLM_curr={max_concurrency}_input={random_input_len}_output={random_output_len}.json",
         "--ready-check-timeout-sec",
@@ -766,11 +803,22 @@ async def run_aiperf_benchmark(
         auth_header_name: Custom header name for authentication (e.g.
             ``"CUSTOM_API_KEY_NAME"``). When ``None`` (default), uses standard
             ``Authorization: Bearer`` header via ``--api-key``.
-        artifact_dir: Directory to store benchmark artifacts.
+        artifact_dir: Directory to store benchmark artifacts.  Must
+            resolve inside the project results root; traversal is
+            rejected.
         ui_type: UI display mode — "none", "simple", or "dashboard".
         warmup_request_count: Number of warmup requests before
             benchmarking.
     """
+    artifact_path = _safe_result_dir(
+        artifact_dir,
+        _RESULT_DIRS["aiperf"],
+        model.replace("/", "_"),
+        datetime.now().strftime("%Y%m%d%H%M%S"),
+    )
+    if isinstance(artifact_path, str):
+        return artifact_path
+
     cmd: list[str] = [
         "aiperf",
         "profile",
@@ -787,8 +835,7 @@ async def run_aiperf_benchmark(
         "--request-count",
         str(request_count),
         "--artifact-dir",
-        f"{artifact_dir}/{model.replace('/', '_')}"
-        f"/{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        str(artifact_path),
         "--ui-type",
         ui_type,
     ]
@@ -899,7 +946,9 @@ async def run_guidellm_benchmark(
         model: Model name to pass in the generated requests.
         api_key: API authentication key — passed via
             ``--backend-kwargs`` as a Bearer token for all requests.
-        output_dir: Directory for output files (json, csv, html).
+        output_dir: Directory for output files (json, csv, html).  Must
+            resolve inside the project results root; traversal is
+            rejected.
         detect_saturation: Enable over-saturation detection.
     """
 
@@ -907,16 +956,21 @@ async def run_guidellm_benchmark(
         profile = "sweep"
     if request_type is None:
         request_type = "chat_completions"
-    if output_dir is None:
-        output_dir = "results_guidellm"
 
     model_safe = model.replace("/", "_") if model else "unknown_model"
-    run_output_dir = (
-        f"{output_dir}/{model_safe}/{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    output_path = _safe_result_dir(
+        output_dir or "",
+        _RESULT_DIRS["guidellm"],
+        model_safe,
+        datetime.now().strftime("%Y%m%d%H%M%S"),
     )
+    if isinstance(output_path, str):
+        return output_path
+
+    run_output_dir = str(output_path)
     # Pre-create the directory so guidellm's _resolve_path recognises
     # it as a directory and appends the default filename (benchmarks.json).
-    pathlib.Path(run_output_dir).mkdir(parents=True, exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
     if data is None:
         data = f"prompt_tokens={prompt_tokens},output_tokens={output_tokens}"
     cmd: list[str] = [
@@ -1039,15 +1093,18 @@ async def run_llama_bench(
         split_mode: Multi-GPU split mode (-sm): none, layer, row.
         use_mmap: Use memory-mapped model loading (-mmp).
         result_dir: Base directory for saving results.  Defaults to
-            the project's ``results_llama_bench`` directory.
+            the project's ``results_llama_bench`` directory.  Must
+            resolve inside the project results root; traversal is
+            rejected.
     """
     model_file = pathlib.Path(model_path)
     if not model_file.is_file():
         return f"Error: model file not found: {model_path}"
 
     model_name = model_file.stem
-    if not result_dir:
-        result_dir = str(_RESULT_DIRS["llamabench"])
+    result_path = _safe_result_dir(result_dir, _RESULT_DIRS["llamabench"], model_name)
+    if isinstance(result_path, str):
+        return result_path
 
     cmd: list[str] = [
         "llama-bench",
@@ -1095,7 +1152,7 @@ async def run_llama_bench(
         ),
         check_tool_name="check_llama_bench_status",
         runner="llamabench",
-        result_dir=f"{result_dir}/{model_name}",
+        result_dir=str(result_path),
         model_name=model_name,
     )
 
@@ -1152,14 +1209,17 @@ async def run_ollama_benchmark(
         num_iterations: Number of times to repeat each prompt.
         category: Label for this benchmark category.
         result_dir: Base directory for saving results.  Defaults to
-            the project's ``results_ollama_bench`` directory.
+            the project's ``results_ollama_bench`` directory.  Must
+            resolve inside the project results root; traversal is
+            rejected.
     """
     if num_iterations < 1:
         return "Error: num_iterations must be at least 1."
 
     model_safe = model.replace("/", "_").replace(":", "_")
-    if not result_dir:
-        result_dir = str(_RESULT_DIRS["ollama"])
+    result_path = _safe_result_dir(result_dir, _RESULT_DIRS["ollama"], model_safe)
+    if isinstance(result_path, str):
+        return result_path
 
     cmd: list[str] = [
         sys.executable,
@@ -1185,7 +1245,7 @@ async def run_ollama_benchmark(
         ),
         check_tool_name="check_ollama_benchmark_status",
         runner="ollama",
-        result_dir=f"{result_dir}/{model_safe}",
+        result_dir=str(result_path),
         model_name=model_safe,
     )
 

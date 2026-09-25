@@ -10,8 +10,10 @@ import pytest
 import perfbench.tools as tools_mod
 from perfbench.tools import (
     _PRESETS,
+    _RESULT_DIRS,
     _BenchmarkEntry,
     _benchmarks,
+    _safe_result_dir,
     _save_stdout_result,
     _stream_reader,
     check_aiperf_benchmark_status,
@@ -2128,3 +2130,88 @@ async def test_run_benchmark_preset_full_with_ollama():
     assert "[Ollama" in result
     assert "oll00001" in result
     mock_ollama.assert_called_once()
+
+
+# ── result directory confinement tests ──────────────────────────
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "../../../../tmp/pwned",
+        "/tmp/pwned",
+        "results_vllm_bench/../../../../tmp/pwned",
+    ],
+)
+def test_safe_result_dir_rejects_escape(raw):
+    """Traversal and absolute paths outside the root are rejected."""
+    result = _safe_result_dir(raw, _RESULT_DIRS["vllm"], "model")
+    assert isinstance(result, str)
+    assert "invalid result directory" in result
+
+
+def test_safe_result_dir_rejects_escape_in_parts():
+    """A traversal hidden in a path component is rejected too."""
+    result = _safe_result_dir("", _RESULT_DIRS["vllm"], "../../../../tmp")
+    assert isinstance(result, str)
+    assert "invalid result directory" in result
+
+
+def test_safe_result_dir_accepts_relative_and_default():
+    """Relative names stay under the root; empty falls back to default."""
+    assert _safe_result_dir("results_vllm_bench", _RESULT_DIRS["vllm"], "m") == (
+        _RESULT_DIRS["vllm"].resolve() / "m"
+    )
+    assert _safe_result_dir("", _RESULT_DIRS["ollama"], "m") == (
+        _RESULT_DIRS["ollama"].resolve() / "m"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("tool", "kwargs", "dir_arg"),
+    [
+        (
+            run_vllm_benchmark,
+            {"model": "m", "base_url": "http://x", "served_model_name": "m"},
+            "result_dir",
+        ),
+        (
+            run_aiperf_benchmark,
+            {"model": "m", "tokenizer": "t", "url": "http://x"},
+            "artifact_dir",
+        ),
+        (run_guidellm_benchmark, {"target": "http://x"}, "output_dir"),
+        (run_ollama_benchmark, {"model": "m"}, "result_dir"),
+    ],
+)
+async def test_run_tools_reject_out_of_root_dir(tool, kwargs, dir_arg, tmp_path):
+    """No subprocess is launched and nothing is created outside the root."""
+    escape = tmp_path / "pwned"
+    with patch(
+        "perfbench.tools.asyncio.create_subprocess_exec", new=AsyncMock()
+    ) as mock_exec:
+        result = await tool(**kwargs, **{dir_arg: str(escape)})
+
+    assert "invalid result directory" in result
+    mock_exec.assert_not_called()
+    assert not escape.exists()
+
+
+@pytest.mark.asyncio
+async def test_run_llama_bench_rejects_out_of_root_dir(tmp_path):
+    """llama-bench rejects an out-of-root result_dir before launching."""
+    model_file = tmp_path / "model.gguf"
+    model_file.write_bytes(b"")
+    escape = tmp_path / "pwned"
+
+    with patch(
+        "perfbench.tools.asyncio.create_subprocess_exec", new=AsyncMock()
+    ) as mock_exec:
+        result = await run_llama_bench(
+            model_path=str(model_file), result_dir=str(escape)
+        )
+
+    assert "invalid result directory" in result
+    mock_exec.assert_not_called()
+    assert not escape.exists()
