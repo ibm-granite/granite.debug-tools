@@ -98,7 +98,7 @@ Launch a vLLM benchmark against an LLM service. Starts `vllm bench serve` as a b
 | `max_concurrency` | `int` | No | `1` | Maximum number of concurrent requests. |
 | `random_input_len` | `int` | No | `10` | Input token length (random dataset). |
 | `random_output_len` | `int` | No | `100` | Output token length (random dataset). |
-| `result_dir` | `str` | No | `"results_vllm_bench"` | Directory to save results in. |
+| `result_dir` | `str` | No | `"results_vllm_bench"` | Directory to save results in. Must resolve inside the project results root; traversal is rejected. |
 | `ready_check_timeout_sec` | `int` | No | `10` | Seconds to wait for server readiness. |
 | `api_token` | `str` | No | `None` | API authentication token. Uses standard `Authorization: Bearer` header by default; uses a custom header when `auth_header_name` is provided. |
 | `auth_header_name` | `str` | No | `None` | Custom header name for authentication (e.g. `"CUSTOM_API_KEY_NAME"`). When `None`, uses standard `Authorization: Bearer` header. |
@@ -154,7 +154,7 @@ Launch an AIPerf benchmark against an LLM service. Starts `aiperf profile` as a 
 | `benchmark_duration` | `float` | No | `None` | Maximum benchmark runtime in seconds. |
 | `api_key` | `str` | No | `None` | API authentication token. Uses aiperf's native `--api-key` flag (standard `Authorization: Bearer`) by default; uses a custom header when `auth_header_name` is provided. |
 | `auth_header_name` | `str` | No | `None` | Custom header name for authentication (e.g. `"CUSTOM_API_KEY_NAME"`). When `None`, uses standard `Authorization: Bearer` header via `--api-key`. |
-| `artifact_dir` | `str` | No | `"results_aiperf"` | Directory to store benchmark artifacts. |
+| `artifact_dir` | `str` | No | `"results_aiperf"` | Directory to store benchmark artifacts. Must resolve inside the project results root; traversal is rejected. |
 | `ui_type` | `str` | No | `"none"` | UI display mode — `"none"`, `"simple"`, or `"dashboard"`. |
 | `warmup_request_count` | `int` | No | `None` | Number of warmup requests before benchmarking. |
 
@@ -210,7 +210,7 @@ Launch a GuideLLM benchmark against an LLM service. Starts `guidellm benchmark` 
 | `processor` | `str` | No | `None` | Tokenizer/processor name for synthetic data. |
 | `model` | `str` | No | `None` | Model name to pass in the generated requests. |
 | `api_key` | `str` | No | `None` | API authentication key (passed as Bearer token). |
-| `output_dir` | `str` | No | `"results_guidellm"` | Directory for output files (json, csv, html). |
+| `output_dir` | `str` | No | `"results_guidellm"` | Directory for output files (json, csv, html). Must resolve inside the project results root; traversal is rejected. |
 | `detect_saturation` | `bool` | No | `False` | Enable over-saturation detection. |
 
 **Example prompt:**
@@ -264,7 +264,7 @@ Launch a llama-bench local inference benchmark. Runs `llama-bench` against a GGU
 | `n_depth` | `int` | No | `0` | KV cache depth (0 = same as `n_prompt`). |
 | `split_mode` | `str` | No | `"layer"` | Multi-GPU split mode — `"layer"`, `"row"`, `"none"`. |
 | `use_mmap` | `bool` | No | `True` | Use memory-mapped model loading. |
-| `result_dir` | `str` | No | `""` | Base directory for saving results. Defaults to the project's `results_llama_bench` directory. |
+| `result_dir` | `str` | No | `""` | Base directory for saving results. Defaults to the project's `results_llama_bench` directory. Must resolve inside the project results root; traversal is rejected. |
 
 **Example prompt:**
 > Run llama-bench on `/models/granite-4.0-micro.Q4_K_M.gguf` with flash attention enabled, 99 GPU layers, and 10 repetitions.
@@ -308,7 +308,7 @@ Launch an Ollama benchmark for local inference performance. Sends prompts to an 
 | `prompts` | `list[str]` | No | `None` | Custom prompts to benchmark. `None` uses a built-in set of 5 diverse prompts. |
 | `num_iterations` | `int` | No | `3` | Number of times to repeat each prompt. |
 | `category` | `str` | No | `"general"` | Label for this benchmark category. |
-| `result_dir` | `str` | No | `""` | Base directory for saving results. Defaults to the project's `results_ollama_bench` directory. |
+| `result_dir` | `str` | No | `""` | Base directory for saving results. Defaults to the project's `results_ollama_bench` directory. Must resolve inside the project results root; traversal is rejected. |
 
 **Example prompt:**
 > Run an Ollama benchmark for `granite3.3:8b` with 5 iterations and the default prompts.
